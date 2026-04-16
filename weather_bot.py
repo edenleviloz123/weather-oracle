@@ -22,27 +22,28 @@ class IdolUltraOracle:
                f"&daily=temperature_2m_max,relative_humidity_2m_max,cloud_cover_max,precipitation_probability_max"
                f"&timezone=Europe%2FLondon&models=ecmwf_ifs04,ukmo_seamless,icon_seamless,meteofrance_seamless,gfs_seamless"
                f"&start_date=2026-04-17&end_date=2026-04-17")
-        return requests.get(url).json()
+        try:
+            return requests.get(url, timeout=15).json()
+        except Exception as e:
+            print(f"Weather API Error: {e}")
+            return None
 
     def fetch_market(self):
         options = Options()
         options.add_argument("--headless")
-        options.add_argument("--no-sandbox") # קריטי ל-GitHub
-        options.add_argument("--disable-dev-shm-usage") # קריטי ל-GitHub
-        
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
         prices = {}
         try:
             driver.get(self.market_url)
-            time.sleep(15) # זמן טעינה ארוך יותר לשרת
+            time.sleep(15)
             page_text = driver.find_element(By.TAG_NAME, "body").text
             for label in ["16°C", "17°C", "18°C", "19°C"]:
                 match = re.search(f"{label}.*?(\d+)¢", page_text)
                 if match: prices[label] = int(match.group(1)) / 100
             return prices
-        except Exception as e:
-            print(f"Market Fetch Error: {e}")
-            return prices
+        except: return prices
         finally: driver.quit()
 
     def generate_dashboard(self, data):
@@ -53,9 +54,9 @@ class IdolUltraOracle:
         reasons = []
         if data['avg'] > self.history_avg:
             reasons.append(f"התחזית גבוהה ב-{data['avg']-self.history_avg:.1f}°C מהממוצע ההיסטורי.")
-        if data['agreement'] >= 75:
+        if data.get('agreement', 0) >= 70:
             reasons.append("רמת ביטחון גבוהה: קונצנזוס רחב בין המודלים.")
-        if data['rain_prob'] > 40:
+        if data.get('rain_prob', 0) > 40:
             reasons.append("שימו לב: הסתברות לגשם עשויה להשפיע על הטמפרטורה.")
 
         rows = "".join([f"<tr><td>{n}</td><td>{t:.1f}°C</td><td>{self.weights.get(n,0)*100:.0f}%</td></tr>" for n, t in data['models'].items()])
@@ -121,21 +122,42 @@ class IdolUltraOracle:
 
     def run_cycle(self):
         meteo = self.fetch_data()
+        if not meteo or 'daily' not in meteo:
+            print("❌ No weather data available.")
+            return
+
         market = self.fetch_market()
         model_map = {"ecmwf_ifs04": "ECMWF", "ukmo_seamless": "UKMO", "icon_seamless": "ICON", "meteofrance_seamless": "MeteoFrance", "gfs_seamless": "GFS"}
-        points = {model_map[k]: meteo['daily'][f'temperature_2m_max_{k}'][0] for k in model_map if meteo['daily'].get(f'temperature_2m_max_{k}')}
-        avg = sum(t * self.weights.get(n, 0.05) for n, t in points.items()) / sum(self.weights.get(n, 0.05) for n in points.keys())
+        
+        # סינון מודלים ריקים (זה התיקון לשגיאה שלך)
+        points = {}
+        for k, name in model_map.items():
+            val = meteo['daily'].get(f'temperature_2m_max_{k}')
+            if val and val[0] is not None:
+                points[name] = val[0]
+
+        if not points:
+            print("❌ No valid model points found.")
+            return
+
+        # חישוב ממוצע משוקלל רק על המודלים הקיימים
+        total_weight = sum(self.weights.get(n, 0.05) for n in points.keys())
+        avg = sum(t * self.weights.get(n, 0.05) for n, t in points.items()) / total_weight
+        
         target = f"{int(round(avg))}°C"
         price = market.get(target, 0)
         votes = [int(round(t)) for t in points.values()]
         agreement = (votes.count(int(round(avg))) / len(votes)) * 100
         
         self.generate_dashboard({
-            'avg': avg, 'target': target, 'humidity': meteo['daily']['relative_humidity_2m_max'][0],
-            'clouds': meteo['daily']['cloud_cover_max'][0], 'rain_prob': meteo['daily']['precipitation_probability_max'][0],
+            'avg': avg, 'target': target, 
+            'humidity': meteo['daily'].get('relative_humidity_2m_max', [0])[0],
+            'clouds': meteo['daily'].get('cloud_cover_max', [0])[0], 
+            'rain_prob': meteo['daily'].get('precipitation_probability_max', [0])[0],
             'signal': "STRONG BUY" if agreement >= 60 and price < 0.40 else "BUY" if agreement >= 50 and price < 0.50 else "HOLD",
             'price': price, 'time': datetime.now().strftime('%d/%m %H:%M'), 'models': points, 'agreement': agreement
         })
+        print("✅ Dashboard updated successfully.")
 
 if __name__ == "__main__":
     API = "e6c511db5ea4dfdef0c71743de948251"
