@@ -23,7 +23,8 @@ class IdolUltraOracle:
                f"&timezone=Europe%2FLondon&models=ecmwf_ifs04,ukmo_seamless,icon_seamless,meteofrance_seamless,gfs_seamless"
                f"&start_date=2026-04-17&end_date=2026-04-17")
         try:
-            return requests.get(url, timeout=15).json()
+            res = requests.get(url, timeout=15)
+            return res.json()
         except Exception as e:
             print(f"Weather API Error: {e}")
             return None
@@ -133,14 +134,14 @@ class IdolUltraOracle:
         points = {}
         for k, name in model_map.items():
             val = meteo['daily'].get(f'temperature_2m_max_{k}')
-            if val and val[0] is not None:
+            if val and isinstance(val, list) and val[0] is not None:
                 points[name] = val[0]
 
         if not points:
             print("❌ No valid model points found.")
             return
 
-        # חישוב ממוצע משוקלל רק על המודלים הקיימים
+        # חישוב משוקלל על בסיס המודלים הזמינים בלבד
         total_weight = sum(self.weights.get(n, 0.05) for n in points.keys())
         avg = sum(t * self.weights.get(n, 0.05) for n, t in points.items()) / total_weight
         
