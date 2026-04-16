@@ -1,33 +1,38 @@
 name: Update Weather Dashboard
+
 on:
   schedule:
-    - cron: '0 * * * *' # פקודה שאומרת לגיטהאב להריץ את זה כל שעה עגולה
-  workflow_dispatch: # מוסיף כפתור שמאפשר לך להריץ את הבוט ידנית מתי שבא לך
+    - cron: '0 * * * *' # רץ כל שעה עגולה
+  workflow_dispatch: # מאפשר הרצה ידנית בלחיצת כפתור
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-      
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # חשוב לסנכרון גרסאות
+
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-          
+
       - name: Install dependencies
         run: |
           pip install requests selenium webdriver-manager
-          
+
       - name: Run bot
         run: python weather_bot.py
-        
+
       - name: Commit and push changes
         run: |
           git config --global user.name "Weather Bot"
           git config --global user.email "bot@weather-oracle.com"
           git add index.html
-          git pull --rebase origin main # מסנכרן את השינויים מהשרת לפני הדחיפה
-          git commit -m "Auto-update dashboard" || exit 0
+          # פקודת הסנכרון הקריטית שתמנע את השגיאה שקיבלת:
+          git pull --rebase origin main
+          git commit -m "Auto-update dashboard v7.0" || exit 0
           git push
