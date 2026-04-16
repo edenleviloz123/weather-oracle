@@ -1,0 +1,50 @@
+
+        <!DOCTYPE html>
+        <html dir="rtl" lang="he">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>IDOL ULTRA DASHBOARD</title>
+            <style>
+                body { background: #050505; color: #fff; font-family: system-ui, sans-serif; padding: 20px; }
+                .container { max-width: 700px; margin: auto; }
+                .card { background: #111; border-radius: 20px; padding: 25px; margin-bottom: 20px; border: 1px solid #222; }
+                .main-temp { font-size: 72px; color: #B5EBBF; font-weight: 900; line-height: 1; }
+                .badge { background: #B5EBBF; color: #000; padding: 6px 15px; border-radius: 30px; font-weight: bold; font-size: 14px; }
+                .reason-tag { border-right: 4px solid #B5EBBF; padding-right: 15px; margin-bottom: 15px; font-size: 14px; color: #ccc; }
+                table { width: 100%; border-collapse: collapse; }
+                td { padding: 12px 5px; border-bottom: 1px solid #1a1a1a; font-size: 14px; }
+                th { color: #555; text-align: right; font-size: 12px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="card" style="text-align: center;">
+                    <span class="badge">BUY | CONFIDENCE: 45%</span>
+                    <div class="main-temp">17.43°C</div>
+                    <div style="font-size: 20px; margin-top: 10px;">יעד פולימרקט: <strong style="color:#B5EBBF">17°C</strong></div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="card">
+                        <h3 style="margin:0; color:#B5EBBF">ROI</h3>
+                        <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">0.0%</div>
+                    </div>
+                    <div class="card">
+                        <h3 style="margin:0;">תנאי שטח</h3>
+                        <div style="margin-top: 10px; font-size: 14px;">
+                            <p>💧 0% | ☁️ 0% | 🌧️ 0%</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-top:0;">📊 השוואת מודלים</h3>
+                    <table>
+                        <thead><tr><th>מודל</th><th>תחזית</th><th>משקל</th></tr></thead>
+                        <tbody><tr><td>UKMO</td><td>17.8°C</td><td>25%</td></tr><tr><td>ICON</td><td>16.8°C</td><td>15%</td></tr><tr><td>MeteoFrance</td><td>17.3°C</td><td>10%</td></tr><tr><td>GFS</td><td>17.6°C</td><td>10%</td></tr></tbody>
+                    </table>
+                </div>
+                <p style="text-align: center; color: #333; font-size: 12px;">IDOL ORACLE | 16/04 19:49</p>
+            </div>
+        </body>
+        </html>
+        
