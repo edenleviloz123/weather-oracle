@@ -8,60 +8,63 @@
             body { background: #050505; color: #fff; font-family: system-ui, sans-serif; margin: 0; padding: 15px; }
             .container { max-width: 480px; margin: auto; }
             .card { background: #111; border: 1px solid #222; border-radius: 24px; padding: 20px; margin-bottom: 15px; }
-            .main-temp { font-size: 75px; font-weight: 900; color: #B5EBBF; text-align: center; margin: 5px 0; }
-            .grid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-            .stat-box { background: #1a1a1a; padding: 12px; border-radius: 15px; text-align: center; border: 1px solid #333; }
-            .stat-val { font-size: 20px; font-weight: bold; color: #B5EBBF; }
-            .stat-label { font-size: 11px; color: #777; margin-bottom: 4px; }
+            .main-temp { font-size: 80px; font-weight: 900; color: #B5EBBF; text-align: center; margin: 0; }
+            .section-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; border-bottom: 1px solid #222; padding-bottom: 8px; color: #eee; }
+            .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+            .stat-box { background: #1a1a1a; padding: 15px; border-radius: 18px; text-align: center; border: 1px solid #333; }
+            .stat-label { font-size: 11px; color: #777; margin-bottom: 5px; }
+            .stat-val { font-size: 22px; font-weight: bold; color: #B5EBBF; }
+            .info-text { font-size: 12px; color: #666; margin-top: 10px; line-height: 1.4; }
             table { width: 100%; border-collapse: collapse; }
-            td, th { padding: 8px 0; border-bottom: 1px solid #1a1a1a; font-size: 13px; }
-            .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-            .footer { text-align: center; font-size: 10px; color: #444; margin-top: 30px; }
+            td, th { padding: 10px 0; border-bottom: 1px solid #1a1a1a; font-size: 14px; }
+            .footer { text-align: center; font-size: 10px; color: #444; margin-top: 30px; letter-spacing: 1px; }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="card">
-                <h2 style="text-align:center; margin:0; font-size:20px;">מערכת חיזוי והחלטה</h2>
-                <div style="text-align:center; color:#555; font-size:12px;">לונדון | 2026-04-17</div>
+                <div class="section-title">📊 התחזית המשוקללת</div>
                 <div class="main-temp">18.37°C</div>
-                <div style="text-align:center; color:#888; font-size:13px;">ממוצע משוקלל (חי)</div>
+                <div style="text-align:center; color:#555; font-size:13px;">ממוצע מבוסס 5 מודלים (לונדון)</div>
                 
-                <div class="grid-stats">
+                <div class="stat-grid">
                     <div class="stat-box">
-                        <div class="stat-label">מדד ביטחון מודלים</div>
-                        <div class="stat-val">93.5%</div>
+                        <div class="stat-label">מדד ביטחון</div>
+                        <div class="stat-val">92.8%</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-label">ממוצע היסטורי</div>
-                        <div class="stat-val">14.5°C</div>
+                        <div class="stat-label">סטטוס שוק</div>
+                        <div class="stat-val" style="color:#fff;">18°C</div>
                     </div>
+                </div>
+                <div class="info-text">
+                    * <b>מדד ביטחון:</b> מעל 80% מעיד על הסכמה רחבה בין המודלים. מתחת ל-60% מעיד על חוסר ודאות גבוה.
+                </div>
+            </div>
+
+            <div class="card" style="border-color: #222;">
+                <div class="section-title">⚖️ זיהוי ארביטראז' (Arbitrage)</div>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">הזדמנות קנייה</div>
+                        <div class="stat-val" style="color: #fff;">NO</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">מדד כדאיות (EV)</div>
+                        <div class="stat-val">11.7</div>
+                    </div>
+                </div>
+                <div class="info-text">
+                    * <b>ארביטראז':</b> המערכת מזהה פער בין התחזית שלנו למחיר השוק (Polymarket). אם מופיע YES, השוק "טועה" והמחיר זול ביחס לביטחון המודלים.
                 </div>
             </div>
 
             <div class="card">
-                <h3 style="margin-top:0; font-size:16px;">📊 ניתוח כדאיות (EV)</h3>
-                <div class="grid-stats">
-                    <div class="stat-box">
-                        <div class="stat-label">מחיר שוק (Poly)</div>
-                        <div class="stat-val">74¢</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-label">המלצת פעולה</div>
-                        <div class="stat-val" style="color:#fff; font-size:16px;">חיובי (קנייה)</div>
-                    </div>
-                </div>
-                <div style="margin-top:15px; padding:10px; background:#1a1a1a; border-radius:10px; font-size:13px; color:#B5EBBF; text-align:center;">
-                    המסקנה: לפי המודלים, קיימת סבירות גבוהה ליעד של 18°C.
-                </div>
-            </div>
-
-            <div class="card">
-                <h3 style="margin-top:0; font-size:16px;">🌡️ פירוט מודלים מלא</h3>
+                <div class="section-title">🌡️ פירוט מודלים (נתונים יבשים)</div>
                 <table>
                     <tr style="color:#666;">
                         <th style="text-align:right;">מודל</th>
-                        <th style="text-align:center;">תחזית</th>
+                        <th style="text-align:center;">טמפ'</th>
                         <th style="text-align:left;">משקל</th>
                     </tr>
                     <tr><td style='text-align:right;'>ECMWF</td><td style='text-align:center; color:#B5EBBF;'>18.5°C</td><td style='text-align:left; color:#666;'>35%</td></tr><tr><td style='text-align:right;'>UKMO</td><td style='text-align:center; color:#B5EBBF;'>18.2°C</td><td style='text-align:left; color:#666;'>25%</td></tr><tr><td style='text-align:right;'>GFS</td><td style='text-align:center; color:#B5EBBF;'>18.9°C</td><td style='text-align:left; color:#666;'>15%</td></tr><tr><td style='text-align:right;'>ICON</td><td style='text-align:center; color:#B5EBBF;'>18.0°C</td><td style='text-align:left; color:#666;'>15%</td></tr><tr><td style='text-align:right;'>MeteoFrance</td><td style='text-align:center; color:#B5EBBF;'>18.1°C</td><td style='text-align:left; color:#666;'>10%</td></tr>
@@ -69,7 +72,7 @@
             </div>
 
             <div class="footer">
-                סונכרן: 22:20:28 | מזהה ריצה: 240613 | אוטומציה פעילה
+                סונכרן: 22:25:39 | מזהה ריצה: 971126 | THOUSANDS OF LOYAL ANGELS
             </div>
         </div>
     </body>
