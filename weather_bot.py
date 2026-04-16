@@ -14,6 +14,7 @@ class IdolUltraOracle:
         self.ow_api_key = ow_api_key
         self.market_url = market_url
         self.lat, self.lon = 51.5048, 0.0495
+        # משקלים אסטרטגיים לחישוב ממוצע
         self.weights = {"ECMWF": 0.35, "UKMO": 0.25, "ICON": 0.15, "MeteoFrance": 0.10, "GFS": 0.10, "OpenWeather": 0.05}
         self.history_avg = 15.5 
 
@@ -50,13 +51,14 @@ class IdolUltraOracle:
     def generate_dashboard(self, data):
         brand_green = "#B5EBBF"
         roi = ((1 / data['price']) - 1) * 100 if data['price'] > 0 else 0
-        conf_score = (data['agreement'] * 0.7) + (30 if data['clouds'] > 50 else 10)
         
-        reasons = []
-        if data['avg'] > self.history_avg:
-            reasons.append(f"התחזית גבוהה ב-{data['avg']-self.history_avg:.1f}°C מהממוצע ההיסטורי.")
-        if data.get('agreement', 0) >= 70:
-            reasons.append("קונצנזוס רחב בין המודלים.")
+        # חישוב הסתברויות לטווח של 3 מעלות (הממוצע וסביבתו)
+        target_int = int(round(data['avg']))
+        range_probs = {}
+        for offset in range(-1, 2): 
+            temp = target_int + offset
+            count = sum(1 for t in data['models'].values() if int(round(t)) == temp)
+            range_probs[temp] = (count / len(data['models'])) * 100 if len(data['models']) > 0 else 0
 
         rows = "".join([f"<tr><td>{n}</td><td>{t:.1f}°C</td><td>{self.weights.get(n,0)*100:.0f}%</td></tr>" for n, t in data['models'].items()])
 
@@ -66,93 +68,26 @@ class IdolUltraOracle:
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>IDOL ULTRA DASHBOARD</title>
+            <title>IDOL ORACLE v7.0</title>
             <style>
                 body {{ background: #050505; color: #fff; font-family: system-ui, sans-serif; padding: 20px; }}
-                .container {{ max-width: 700px; margin: auto; }}
+                .container {{ max-width: 800px; margin: auto; }}
                 .card {{ background: #111; border-radius: 20px; padding: 25px; margin-bottom: 20px; border: 1px solid #222; }}
-                .main-temp {{ font-size: 72px; color: {brand_green}; font-weight: 900; line-height: 1; }}
-                .badge {{ background: {brand_green}; color: #000; padding: 6px 15px; border-radius: 30px; font-weight: bold; font-size: 14px; }}
-                .reason-tag {{ border-right: 4px solid {brand_green}; padding-right: 15px; margin-bottom: 15px; font-size: 14px; color: #ccc; }}
-                table {{ width: 100%; border-collapse: collapse; }}
-                td {{ padding: 12px 5px; border-bottom: 1px solid #1a1a1a; font-size: 14px; }}
-                th {{ color: #555; text-align: right; font-size: 12px; }}
+                .header {{ text-align: center; margin-bottom: 30px; }}
+                .main-temp {{ font-size: 80px; color: {brand_green}; font-weight: 900; }}
+                .location-tag {{ color: #888; font-size: 18px; margin-top: -10px; }}
+                .prob-bar {{ height: 10px; background: #222; border-radius: 5px; margin: 10px 0; overflow: hidden; }}
+                .prob-fill {{ height: 100%; background: {brand_green}; }}
+                table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+                td, th {{ padding: 12px; border-bottom: 1px solid #222; text-align: right; }}
+                .explanation {{ font-size: 14px; color: #aaa; line-height: 1.6; border-right: 3px solid {brand_green}; padding-right: 15px; margin-top: 15px; }}
             </style>
         </head>
         <body>
             <div class="container">
-                <div class="card" style="text-align: center;">
-                    <span class="badge">{data['signal']} | CONFIDENCE: {conf_score:.0f}%</span>
-                    <div class="main-temp">{data['avg']:.2f}°C</div>
-                    <div style="font-size: 20px; margin-top: 10px;">יעד פולימרקט: <strong style="color:{brand_green}">{data['target']}</strong></div>
+                <div class="header">
+                    <h1 style="margin:0; color:{brand_green}">IDOL ORACLE</h1>
+                    <div class="location-tag">לונדון (LHR/City) | 17 באפריל, 2026</div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div class="card">
-                        <h3 style="margin:0; color:{brand_green}">ROI</h3>
-                        <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">{roi:.1f}%</div>
-                    </div>
-                    <div class="card">
-                        <h3 style="margin:0;">תנאי שטח</h3>
-                        <div style="margin-top: 10px; font-size: 14px;">
-                            <p>💧 {data['humidity']}% | ☁️ {data['clouds']}% | 🌧️ {data['rain_prob']}%</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <h3 style="margin-top:0;">📊 השוואת מודלים</h3>
-                    <table>
-                        <thead><tr><th>מודל</th><th>תחזית</th><th>משקל</th></tr></thead>
-                        <tbody>{rows}</tbody>
-                    </table>
-                </div>
-                <p style="text-align: center; color: #333; font-size: 12px;">IDOL ORACLE | {data['time']}</p>
-            </div>
-        </body>
-        </html>
-        """
-        with open("index.html", "w", encoding="utf-8") as f:
-            f.write(html)
 
-    def run_cycle(self):
-        meteo = self.fetch_data()
-        if not meteo or 'daily' not in meteo:
-            return
-
-        market = self.fetch_market()
-        model_map = {"ecmwf_ifs04": "ECMWF", "ukmo_seamless": "UKMO", "icon_seamless": "ICON", "meteofrance_seamless": "MeteoFrance", "gfs_seamless": "GFS"}
-        
-        # --- התיקון הקריטי ---
-        points = {}
-        for k, name in model_map.items():
-            field = f'temperature_2m_max_{k}'
-            if field in meteo['daily'] and meteo['daily'][field][0] is not None:
-                points[name] = float(meteo['daily'][field][0])
-
-        if not points:
-            print("No valid data points.")
-            return
-
-        total_weight = sum(self.weights.get(n, 0.05) for n in points.keys())
-        weighted_sum = sum(t * self.weights.get(n, 0.05) for n, t in points.items())
-        avg = weighted_sum / total_weight
-        # ---------------------
-
-        target = f"{int(round(avg))}°C"
-        price = market.get(target, 0)
-        votes = [int(round(t)) for t in points.values()]
-        agreement = (votes.count(int(round(avg))) / len(votes)) * 100
-        
-        self.generate_dashboard({
-            'avg': avg, 'target': target, 
-            'humidity': meteo['daily'].get('relative_humidity_2m_max', [0])[0],
-            'clouds': meteo['daily'].get('cloud_cover_max', [0])[0], 
-            'rain_prob': meteo['daily'].get('precipitation_probability_max', [0])[0],
-            'signal': "BUY" if price < 0.50 else "HOLD",
-            'price': price, 'time': datetime.now().strftime('%d/%m %H:%M'), 'models': points, 'agreement': agreement
-        })
-
-if __name__ == "__main__":
-    API = "e6c511db5ea4dfdef0c71743de948251"
-    URL = "https://polymarket.com/event/highest-temperature-in-london-on-april-17-2026"
-    agent = IdolUltraOracle(API, URL)
-    agent.run_cycle()
+                <div class="card" style="text-align: center
