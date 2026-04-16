@@ -4,46 +4,80 @@
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>IDOL ULTRA DASHBOARD</title>
+            <title>IDOL ORACLE v7.0</title>
             <style>
                 body { background: #050505; color: #fff; font-family: system-ui, sans-serif; padding: 20px; }
-                .container { max-width: 700px; margin: auto; }
+                .container { max-width: 800px; margin: auto; }
                 .card { background: #111; border-radius: 20px; padding: 25px; margin-bottom: 20px; border: 1px solid #222; }
-                .main-temp { font-size: 72px; color: #B5EBBF; font-weight: 900; line-height: 1; }
-                .badge { background: #B5EBBF; color: #000; padding: 6px 15px; border-radius: 30px; font-weight: bold; font-size: 14px; }
-                .reason-tag { border-right: 4px solid #B5EBBF; padding-right: 15px; margin-bottom: 15px; font-size: 14px; color: #ccc; }
-                table { width: 100%; border-collapse: collapse; }
-                td { padding: 12px 5px; border-bottom: 1px solid #1a1a1a; font-size: 14px; }
-                th { color: #555; text-align: right; font-size: 12px; }
+                .header { text-align: center; margin-bottom: 30px; }
+                .main-temp { font-size: 80px; color: #B5EBBF; font-weight: 900; }
+                .location-tag { color: #888; font-size: 18px; margin-top: -10px; }
+                .prob-bar { height: 10px; background: #222; border-radius: 5px; margin: 10px 0; overflow: hidden; }
+                .prob-fill { height: 100%; background: #B5EBBF; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                td, th { padding: 12px; border-bottom: 1px solid #222; text-align: right; }
+                .explanation { font-size: 14px; color: #aaa; line-height: 1.6; border-right: 3px solid #B5EBBF; padding-right: 15px; margin-top: 15px; }
             </style>
         </head>
         <body>
             <div class="container">
+                <div class="header">
+                    <h1 style="margin:0; color:#B5EBBF">IDOL ORACLE</h1>
+                    <div class="location-tag">לונדון (LHR/City) | 17 באפריל, 2026</div>
+                </div>
+
                 <div class="card" style="text-align: center;">
-                    <span class="badge">BUY | CONFIDENCE: 45%</span>
-                    <div class="main-temp">17.43°C</div>
-                    <div style="font-size: 20px; margin-top: 10px;">יעד פולימרקט: <strong style="color:#B5EBBF">17°C</strong></div>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <div class="card">
-                        <h3 style="margin:0; color:#B5EBBF">ROI</h3>
-                        <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">0.0%</div>
-                    </div>
-                    <div class="card">
-                        <h3 style="margin:0;">תנאי שטח</h3>
-                        <div style="margin-top: 10px; font-size: 14px;">
-                            <p>💧 0% | ☁️ 0% | 🌧️ 0%</p>
-                        </div>
+                    <div style="font-size: 14px; letter-spacing: 2px; color: #888;">תחזית משוקללת סופית</div>
+                    <div class="main-temp">17.48°C</div>
+                    <div class="explanation">
+                        <strong>הסבר טכני:</strong> הממוצע מחושב לפי משקלים קבועים: ECMWF (אירופאי) מקבל 35% בגלל דיוק גבוה בבריטניה. הנתון הוא שילוב של 5 מודלים שונים.
                     </div>
                 </div>
+
                 <div class="card">
-                    <h3 style="margin-top:0;">📊 השוואת מודלים</h3>
+                    <h3>🎯 הסתברות סטטיסטית (טווח 3 מעלות)</h3>
+                    
+                        <div style="margin-bottom:15px;">
+                            <div style="display:flex; justify-content:space-between; font-size:14px;">
+                                <span>טמפרטורה חזויה: 16°C</span>
+                                <span>0% תמיכת מודלים</span>
+                            </div>
+                            <div class="prob-bar"><div class="prob-fill" style="width: 0.0%"></div></div>
+                        </div>
+                    
+                        <div style="margin-bottom:15px;">
+                            <div style="display:flex; justify-content:space-between; font-size:14px;">
+                                <span>טמפרטורה חזויה: 17°C</span>
+                                <span>50% תמיכת מודלים</span>
+                            </div>
+                            <div class="prob-bar"><div class="prob-fill" style="width: 50.0%"></div></div>
+                        </div>
+                    
+                        <div style="margin-bottom:15px;">
+                            <div style="display:flex; justify-content:space-between; font-size:14px;">
+                                <span>טמפרטורה חזויה: 18°C</span>
+                                <span>50% תמיכת מודלים</span>
+                            </div>
+                            <div class="prob-bar"><div class="prob-fill" style="width: 50.0%"></div></div>
+                        </div>
+                    
+                </div>
+
+                <div class="card">
+                    <h3>📊 פירוט נתונים גולמיים מכל המודלים</h3>
                     <table>
-                        <thead><tr><th>מודל</th><th>תחזית</th><th>משקל</th></tr></thead>
-                        <tbody><tr><td>UKMO</td><td>17.8°C</td><td>25%</td></tr><tr><td>ICON</td><td>16.8°C</td><td>15%</td></tr><tr><td>MeteoFrance</td><td>17.3°C</td><td>10%</td></tr><tr><td>GFS</td><td>17.6°C</td><td>10%</td></tr></tbody>
+                        <thead><tr><th>מקור דיווח</th><th>תחזית</th><th>משקל בחישוב</th></tr></thead>
+                        <tbody><tr><td>UKMO</td><td>17.9°C</td><td>25%</td></tr><tr><td>ICON</td><td>16.8°C</td><td>15%</td></tr><tr><td>MeteoFrance</td><td>17.3°C</td><td>10%</td></tr><tr><td>GFS</td><td>17.6°C</td><td>10%</td></tr></tbody>
                     </table>
                 </div>
-                <p style="text-align: center; color: #333; font-size: 12px;">IDOL ORACLE | 16/04 19:49</p>
+
+                <div class="card" style="background: #B5EBBF; color: #000;">
+                    <h3 style="margin:0;">💰 ניתוח שוק (Polymarket)</h3>
+                    <p>מחיר שוק ליעד 17°C: <strong>0.00¢</strong></p>
+                    <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">ROI פוטנציאלי: 0.0%</p>
+                </div>
+                
+                <p style="text-align: center; color: #444; font-size: 11px;">IDOL ORACLE v7.0 | 16/04 20:20</p>
             </div>
         </body>
         </html>
