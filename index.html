@@ -4,113 +4,72 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>IDOL ORACLE</title>
         <style>
-            body { background: #050505; color: #fff; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 20px; text-align: right; }
+            body { background: #050505; color: #fff; font-family: system-ui, sans-serif; margin: 0; padding: 15px; }
             .container { max-width: 480px; margin: auto; }
-            .card { background: #111; border: 1px solid #222; border-radius: 28px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
-            .brand-header { color: #B5EBBF; letter-spacing: 4px; font-size: 13px; font-weight: bold; margin-bottom: 20px; text-align: center; }
-            .temp-display { font-size: 80px; font-weight: 900; color: #B5EBBF; text-align: center; margin: 10px 0; }
-            .card-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #222; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-            .market-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-            .market-box { background: #1a1a1a; border: 1px solid #333; padding: 15px; border-radius: 18px; text-align: center; }
-            .price { font-size: 26px; font-weight: bold; color: #B5EBBF; margin-top: 5px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            tr { border-bottom: 1px solid #1a1a1a; }
-            th, td { font-size: 14px; padding: 10px 0; }
-            .conclusion { background: #111; border: 1px solid #222; border-radius: 18px; padding: 15px; color: #fff; font-weight: bold; margin-top: 15px; text-align: center; }
-            .footer { text-align: center; font-size: 10px; color: #444; margin-top: 50px; letter-spacing: 2px; line-height: 2; }
+            .card { background: #111; border: 1px solid #222; border-radius: 24px; padding: 20px; margin-bottom: 15px; }
+            .main-temp { font-size: 75px; font-weight: 900; color: #B5EBBF; text-align: center; margin: 5px 0; }
+            .grid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+            .stat-box { background: #1a1a1a; padding: 12px; border-radius: 15px; text-align: center; border: 1px solid #333; }
+            .stat-val { font-size: 20px; font-weight: bold; color: #B5EBBF; }
+            .stat-label { font-size: 11px; color: #777; margin-bottom: 4px; }
+            table { width: 100%; border-collapse: collapse; }
+            td, th { padding: 8px 0; border-bottom: 1px solid #1a1a1a; font-size: 13px; }
+            .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+            .footer { text-align: center; font-size: 10px; color: #444; margin-top: 30px; }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="card">
-                <div class="brand-header">IDOL STUDIOS ORACLE</div>
-                <div style="text-align:center; color:#888; font-size:15px; margin-bottom:5px;">לונדון | 2026-04-17</div>
-                <div class="temp-display">18.37°C</div>
-                <div style="text-align:center; font-size:12px; color:#555;">סטטוס: LIVE DATA</div>
+                <h2 style="text-align:center; margin:0; font-size:20px;">מערכת חיזוי והחלטה</h2>
+                <div style="text-align:center; color:#555; font-size:12px;">לונדון | 2026-04-17</div>
+                <div class="main-temp">18.37°C</div>
+                <div style="text-align:center; color:#888; font-size:13px;">ממוצע משוקלל (חי)</div>
+                
+                <div class="grid-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">מדד ביטחון מודלים</div>
+                        <div class="stat-val">93.5%</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">ממוצע היסטורי</div>
+                        <div class="stat-val">14.5°C</div>
+                    </div>
+                </div>
             </div>
 
             <div class="card">
-                <div class="card-title">🌡️ התפלגות מודלים</div>
+                <h3 style="margin-top:0; font-size:16px;">📊 ניתוח כדאיות (EV)</h3>
+                <div class="grid-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">מחיר שוק (Poly)</div>
+                        <div class="stat-val">74¢</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">המלצת פעולה</div>
+                        <div class="stat-val" style="color:#fff; font-size:16px;">חיובי (קנייה)</div>
+                    </div>
+                </div>
+                <div style="margin-top:15px; padding:10px; background:#1a1a1a; border-radius:10px; font-size:13px; color:#B5EBBF; text-align:center;">
+                    המסקנה: לפי המודלים, קיימת סבירות גבוהה ליעד של 18°C.
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0; font-size:16px;">🌡️ פירוט מודלים מלא</h3>
                 <table>
-                    <tr style="color:#666; font-size:12px;">
+                    <tr style="color:#666;">
                         <th style="text-align:right;">מודל</th>
                         <th style="text-align:center;">תחזית</th>
                         <th style="text-align:left;">משקל</th>
                     </tr>
-                    
-        <tr>
-            <td style="text-align:right; padding:12px;">ECMWF</td>
-            <td style="text-align:center; color:#B5EBBF; font-weight:bold;">18.5°C</td>
-            <td style="text-align:left; color:#666;">35%</td>
-        </tr>
-        <tr>
-            <td style="text-align:right; padding:12px;">UKMO</td>
-            <td style="text-align:center; color:#B5EBBF; font-weight:bold;">18.2°C</td>
-            <td style="text-align:left; color:#666;">25%</td>
-        </tr>
-        <tr>
-            <td style="text-align:right; padding:12px;">GFS</td>
-            <td style="text-align:center; color:#B5EBBF; font-weight:bold;">18.9°C</td>
-            <td style="text-align:left; color:#666;">15%</td>
-        </tr>
-        <tr>
-            <td style="text-align:right; padding:12px;">ICON</td>
-            <td style="text-align:center; color:#B5EBBF; font-weight:bold;">18.0°C</td>
-            <td style="text-align:left; color:#666;">15%</td>
-        </tr>
-        <tr>
-            <td style="text-align:right; padding:12px;">MeteoFrance</td>
-            <td style="text-align:center; color:#B5EBBF; font-weight:bold;">18.1°C</td>
-            <td style="text-align:left; color:#666;">10%</td>
-        </tr>
+                    <tr><td style='text-align:right;'>ECMWF</td><td style='text-align:center; color:#B5EBBF;'>18.5°C</td><td style='text-align:left; color:#666;'>35%</td></tr><tr><td style='text-align:right;'>UKMO</td><td style='text-align:center; color:#B5EBBF;'>18.2°C</td><td style='text-align:left; color:#666;'>25%</td></tr><tr><td style='text-align:right;'>GFS</td><td style='text-align:center; color:#B5EBBF;'>18.9°C</td><td style='text-align:left; color:#666;'>15%</td></tr><tr><td style='text-align:right;'>ICON</td><td style='text-align:center; color:#B5EBBF;'>18.0°C</td><td style='text-align:left; color:#666;'>15%</td></tr><tr><td style='text-align:right;'>MeteoFrance</td><td style='text-align:center; color:#B5EBBF;'>18.1°C</td><td style='text-align:left; color:#666;'>10%</td></tr>
                 </table>
-            </div>
-
-            <div class="card">
-                <div class="card-title">📊 ניתוח שוק (Polymarket)</div>
-                <div class="market-grid">
-                    <div class="market-box">
-                        <div style="font-size:12px; color:#aaa;">מחיר התחזית (18°C)</div>
-                        <div class="price">74¢</div>
-                    </div>
-                    <div class="market-box">
-                        <div style="font-size:12px; color:#aaa;">ארביטראז'</div>
-                        <div class="price" style="color:#fff;">NO</div>
-                    </div>
-                </div>
-                
-                <h4 style="margin:20px 0 10px 0; font-size:15px;">שלוש האפשרויות החזקות ביותר:</h4>
-                <table>
-                    <tr style="color:#666; font-size:12px;">
-                        <th style="text-align:right;">אפשרות</th>
-                        <th style="text-align:left;">מחיר (¢)</th>
-                    </tr>
-                    
-        <tr>
-            <td style="text-align:right; padding:12px;">18°C</td>
-            <td style="text-align:left; color:#B5EBBF; font-weight:bold;">74¢</td>
-        </tr>
-        <tr>
-            <td style="text-align:right; padding:12px;">17°C</td>
-            <td style="text-align:left; color:#B5EBBF; font-weight:bold;">25¢</td>
-        </tr>
-        <tr>
-            <td style="text-align:right; padding:12px;">19°C</td>
-            <td style="text-align:left; color:#B5EBBF; font-weight:bold;">18¢</td>
-        </tr>
-                </table>
-            </div>
-
-            <div class="card" style="border-color:#222;">
-                <div class="card-title" style="border:none;">💡 המסקנה</div>
-                <div class="conclusion">השוק מתמחר את התחזית באופן מדויק. אין ארביטראז'.</div>
             </div>
 
             <div class="footer">
-                THOUSANDS OF LOYAL ANGELS<br>
-                סונכרן: 2026-04-16 22:10:11 | מזהה: 847137
+                סונכרן: 22:20:28 | מזהה ריצה: 240613 | אוטומציה פעילה
             </div>
         </div>
     </body>
