@@ -56,9 +56,7 @@ class IdolUltraOracle:
         if data['avg'] > self.history_avg:
             reasons.append(f"התחזית גבוהה ב-{data['avg']-self.history_avg:.1f}°C מהממוצע ההיסטורי.")
         if data.get('agreement', 0) >= 70:
-            reasons.append("רמת ביטחון גבוהה: קונצנזוס רחב בין המודלים.")
-        if data.get('rain_prob', 0) > 40:
-            reasons.append("שימו לב: הסתברות לגשם עשויה להשפיע על הטמפרטורה.")
+            reasons.append("קונצנזוס רחב בין המודלים.")
 
         rows = "".join([f"<tr><td>{n}</td><td>{t:.1f}°C</td><td>{self.weights.get(n,0)*100:.0f}%</td></tr>" for n, t in data['models'].items()])
 
@@ -90,21 +88,15 @@ class IdolUltraOracle:
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div class="card">
-                        <h3 style="margin:0; color:{brand_green}">רווחיות (ROI)</h3>
+                        <h3 style="margin:0; color:{brand_green}">ROI</h3>
                         <div style="font-size: 32px; font-weight: bold; margin: 10px 0;">{roi:.1f}%</div>
-                        <p style="font-size: 14px; color: #888;">רווח מ-$100: <span style="color:#fff">${((100/data['price'])-100) if data['price']>0 else 0:.1f}</span></p>
                     </div>
                     <div class="card">
                         <h3 style="margin:0;">תנאי שטח</h3>
                         <div style="margin-top: 10px; font-size: 14px;">
-                            <p>💧 לחות: {data['humidity']}% | ☁️ עננות: {data['clouds']}%</p>
-                            <p>🌧️ סיכוי לגשם: {data['rain_prob']}%</p>
+                            <p>💧 {data['humidity']}% | ☁️ {data['clouds']}% | 🌧️ {data['rain_prob']}%</p>
                         </div>
                     </div>
-                </div>
-                <div class="card">
-                    <h3 style="margin-top:0;">🔍 ניתוח אסטרטגי</h3>
-                    {"".join([f'<div class="reason-tag">{r}</div>' for r in reasons])}
                 </div>
                 <div class="card">
                     <h3 style="margin-top:0;">📊 השוואת מודלים</h3>
@@ -113,7 +105,7 @@ class IdolUltraOracle:
                         <tbody>{rows}</tbody>
                     </table>
                 </div>
-                <p style="text-align: center; color: #333; font-size: 12px;">IDOL ORACLE v6.1 | {data['time']}</p>
+                <p style="text-align: center; color: #333; font-size: 12px;">IDOL ORACLE | {data['time']}</p>
             </div>
         </body>
         </html>
@@ -124,27 +116,27 @@ class IdolUltraOracle:
     def run_cycle(self):
         meteo = self.fetch_data()
         if not meteo or 'daily' not in meteo:
-            print("❌ No weather data available.")
             return
 
         market = self.fetch_market()
         model_map = {"ecmwf_ifs04": "ECMWF", "ukmo_seamless": "UKMO", "icon_seamless": "ICON", "meteofrance_seamless": "MeteoFrance", "gfs_seamless": "GFS"}
         
-        # סינון מודלים ריקים (זה התיקון לשגיאה שלך)
+        # --- התיקון הקריטי ---
         points = {}
         for k, name in model_map.items():
-            val = meteo['daily'].get(f'temperature_2m_max_{k}')
-            if val and isinstance(val, list) and val[0] is not None:
-                points[name] = val[0]
+            field = f'temperature_2m_max_{k}'
+            if field in meteo['daily'] and meteo['daily'][field][0] is not None:
+                points[name] = float(meteo['daily'][field][0])
 
         if not points:
-            print("❌ No valid model points found.")
+            print("No valid data points.")
             return
 
-        # חישוב משוקלל על בסיס המודלים הזמינים בלבד
         total_weight = sum(self.weights.get(n, 0.05) for n in points.keys())
-        avg = sum(t * self.weights.get(n, 0.05) for n, t in points.items()) / total_weight
-        
+        weighted_sum = sum(t * self.weights.get(n, 0.05) for n, t in points.items())
+        avg = weighted_sum / total_weight
+        # ---------------------
+
         target = f"{int(round(avg))}°C"
         price = market.get(target, 0)
         votes = [int(round(t)) for t in points.values()]
@@ -155,10 +147,9 @@ class IdolUltraOracle:
             'humidity': meteo['daily'].get('relative_humidity_2m_max', [0])[0],
             'clouds': meteo['daily'].get('cloud_cover_max', [0])[0], 
             'rain_prob': meteo['daily'].get('precipitation_probability_max', [0])[0],
-            'signal': "STRONG BUY" if agreement >= 60 and price < 0.40 else "BUY" if agreement >= 50 and price < 0.50 else "HOLD",
+            'signal': "BUY" if price < 0.50 else "HOLD",
             'price': price, 'time': datetime.now().strftime('%d/%m %H:%M'), 'models': points, 'agreement': agreement
         })
-        print("✅ Dashboard updated successfully.")
 
 if __name__ == "__main__":
     API = "e6c511db5ea4dfdef0c71743de948251"
