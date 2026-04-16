@@ -2,8 +2,11 @@ name: Update Weather Dashboard
 
 on:
   schedule:
-    - cron: '0 * * * *' # רץ כל שעה עגולה
-  workflow_dispatch: # מאפשר הרצה ידנית
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write # נותן לבוט רשות לכתוב קבצים לתוך הגיטהאב שלך
 
 jobs:
   build:
@@ -13,7 +16,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -32,7 +35,6 @@ jobs:
           git config --global user.name "Weather Bot"
           git config --global user.email "bot@weather-oracle.com"
           git add index.html
-          # הפקודה הבאה מנקה את ה"פלונטר" ומכריחה סנכרון
+          git commit -m "Auto-update dashboard v7.2" || echo "No changes to commit"
           git pull --rebase --autostash origin main
-          git commit -m "Auto-update dashboard v7.0" || exit 0
           git push
