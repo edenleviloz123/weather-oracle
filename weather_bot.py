@@ -1,7 +1,6 @@
 import requests
 import time
 import re
-import os
 from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -10,13 +9,11 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 
 class IdolUltraOracle:
-    def __init__(self, ow_api_key, market_url):
-        self.ow_api_key = ow_api_key
+    def __init__(self, market_url):
         self.market_url = market_url
         self.lat, self.lon = 51.5048, 0.0495
-        # משקלים אסטרטגיים לחישוב ממוצע
+        # משקלים אסטרטגיים לחישוב ממוצע (מתאים לניתוח נתונים חשבונאי)
         self.weights = {"ECMWF": 0.35, "UKMO": 0.25, "ICON": 0.15, "MeteoFrance": 0.10, "GFS": 0.10, "OpenWeather": 0.05}
-        self.history_avg = 15.5 
 
     def fetch_data(self):
         url = (f"https://api.open-meteo.com/v1/forecast?latitude={self.lat}&longitude={self.lon}"
@@ -52,7 +49,7 @@ class IdolUltraOracle:
         brand_green = "#B5EBBF"
         roi = ((1 / data['price']) - 1) * 100 if data['price'] > 0 else 0
         
-        # חישוב הסתברויות לטווח של 3 מעלות (הממוצע וסביבתו)
+        # חישוב הסתברויות לטווח של 3 מעלות
         target_int = int(round(data['avg']))
         range_probs = {}
         for offset in range(-1, 2): 
@@ -90,4 +87,76 @@ class IdolUltraOracle:
                     <div class="location-tag">לונדון (LHR/City) | 17 באפריל, 2026</div>
                 </div>
 
-                <div class="card" style="text-align: center
+                <div class="card" style="text-align: center;">
+                    <div style="font-size: 14px; letter-spacing: 2px; color: #888;">תחזית משוקללת סופית</div>
+                    <div class="main-temp">{data['avg']:.2f}°C</div>
+                    <div class="explanation">
+                        <strong>ביאור לחישוב:</strong> כסטודנט לחשבונאות, חשוב להכיר את המודל: ECMWF מקבל משקל של 35% בשל דיוק היסטורי עדיף בבריטניה. הנתון מייצג ממוצע משוקלל של 5 מודלים שונים.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🎯 הסתברות סטטיסטית (טווח 3 מעלות)</h3>
+                    { "".join([f'''
+                        <div style="margin-bottom:15px;">
+                            <div style="display:flex; justify-content:space-between; font-size:14px;">
+                                <span>טמפרטורה חזויה: {temp}°C</span>
+                                <span>{prob:.0f}% תמיכת מודלים</span>
+                            </div>
+                            <div class="prob-bar"><div class="prob-fill" style="width: {prob}%"></div></div>
+                        </div>
+                    ''' for temp, prob in range_probs.items()]) }
+                </div>
+
+                <div class="card">
+                    <h3>📊 פירוט נתונים גולמיים (Audit Trail)</h3>
+                    <table>
+                        <thead><tr><th>מקור דיווח</th><th>תחזית</th><th>משקל</th></tr></thead>
+                        <tbody>{rows}</tbody>
+                    </table>
+                </div>
+
+                <div class="card" style="background: {brand_green}; color: #000;">
+                    <h3 style="margin:0;">💰 ניתוח כדאיות שוק</h3>
+                    <p>מחיר שוק ליעד {data['target']}: <strong>{data['price']:.2f}¢</strong></p>
+                    <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">ROI פוטנציאלי: {roi:.1f}%</p>
+                </div>
+                
+                <p style="text-align: center; color: #444; font-size: 11px;">עודכן ב: {data['time']}</p>
+            </div>
+        </body>
+        </html>
+        """
+        with open("index.html", "w", encoding="utf-8") as f:
+            f.write(html)
+
+    def run_cycle(self):
+        meteo = self.fetch_data()
+        if not meteo or 'daily' not in meteo: return
+
+        market = self.fetch_market()
+        model_map = {"ecmwf_ifs04": "ECMWF", "ukmo_seamless": "UKMO", "icon_seamless": "ICON", "meteofrance_seamless": "MeteoFrance", "gfs_seamless": "GFS"}
+        
+        points = {}
+        for k, name in model_map.items():
+            field = f'temperature_2m_max_{k}'
+            if field in meteo['daily'] and meteo['daily'][field][0] is not None:
+                points[name] = float(meteo['daily'][field][0])
+
+        if not points: return
+
+        total_weight = sum(self.weights.get(n, 0.05) for n in points.keys())
+        avg = sum(t * self.weights.get(n, 0.05) for n, t in points.items()) / total_weight
+        
+        target = f"{int(round(avg))}°C"
+        price = market.get(target, 0)
+        
+        self.generate_dashboard({
+            'avg': avg, 'target': target, 
+            'price': price, 'time': datetime.now().strftime('%d/%m %H:%M'), 'models': points
+        })
+
+if __name__ == "__main__":
+    URL = "https://polymarket.com/event/highest-temperature-in-london-on-april-17-2026"
+    agent = IdolUltraOracle(URL)
+    agent.run_cycle()
