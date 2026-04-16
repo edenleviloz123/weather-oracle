@@ -2,11 +2,11 @@ name: Update Weather Dashboard
 
 on:
   schedule:
-    - cron: '0 * * * *' # רץ בכל שעה עגולה
-  workflow_dispatch: # מאפשר לך להריץ ידנית
+    - cron: '0 * * * *' # רץ אוטומטית כל שעה
+  workflow_dispatch: # מאפשר הרצה ידנית בלחיצת כפתור
 
 permissions:
-  contents: write # קריטי: מאפשר לבוט לשנות קבצים ב-Repository
+  contents: write
 
 jobs:
   build:
@@ -34,7 +34,6 @@ jobs:
           git config --global user.name "Weather Bot"
           git config --global user.email "bot@weather-oracle.com"
           git add index.html
-          # פקודה שדורסת התנגשויות ודוחפת את האתר המעודכן בכוח
-          git commit -m "Full Oracle Update v7.5" || exit 0
+          git commit -m "Auto-update v7.5" || exit 0
           git pull --rebase --autostash origin main
           git push origin main
