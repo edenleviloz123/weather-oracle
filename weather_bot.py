@@ -12,20 +12,16 @@ class IdolUltraOracle:
     def __init__(self, market_url):
         self.market_url = market_url
         self.lat, self.lon = 51.5048, 0.0495
-        self.weights = {"ECMWF": 0.35, "UKMO": 0.25, "ICON": 0.15, "MeteoFrance": 0.10, "GFS": 0.10, "OpenWeather": 0.05}
+        self.weights = {"ECMWF": 0.35, "UKMO": 0.25, "ICON": 0.15, "MeteoFrance": 0.10, "GFS": 0.10}
 
     def fetch_data(self):
-        # כתובת פשוטה ויציבה יותר למשיכת כל המודלים במקביל
         url = (f"https://api.open-meteo.com/v1/forecast?latitude={self.lat}&longitude={self.lon}"
                f"&daily=temperature_2m_max_ecmwf_ifs04,temperature_2m_max_ukmo_seamless,temperature_2m_max_icon_seamless,temperature_2m_max_meteofrance_seamless,temperature_2m_max_gfs_seamless"
                f"&timezone=Europe%2FLondon&start_date=2026-04-17&end_date=2026-04-17")
         try:
             res = requests.get(url, timeout=15)
             data = res.json()
-            if 'daily' not in data:
-                print(f"API Warning: No daily data in response. Content: {data}")
-                return None
-            return data
+            return data if 'daily' in data else None
         except Exception as e:
             print(f"Weather API Error: {e}")
             return None
@@ -86,25 +82,21 @@ class IdolUltraOracle:
             <div class="container">
                 <h1 style="text-align:center; color:{brand_green}">IDOL ORACLE</h1>
                 <p style="text-align:center; color:#888;">לונדון | 17 באפריל, 2026</p>
-
                 <div class="card">
                     <div class="main-temp">{data['avg']:.2f}°C</div>
-                    <p style="text-align:center; color:#aaa;">ממוצע משוקלל סופי</p>
+                    <p style="text-align:center; color:#aaa;">ממוצע משוקלל סופי (כולל ECMWF)</p>
                 </div>
-
                 <div class="card">
-                    <h3>🎯 הסתברות סטטיסטית (טווח 3 מעלות)</h3>
+                    <h3>🎯 הסתברות סטטיסטית</h3>
                     { "".join([f'<div>{t}°C ({p:.0f}%)<div class="prob-bar"><div class="prob-fill" style="width:{p}%"></div></div></div>' for t,p in range_probs.items()]) }
                 </div>
-
                 <div class="card">
-                    <h3>📊 פירוט מודלים גולמי</h3>
+                    <h3>📊 פירוט מודלים</h3>
                     <table>
                         <thead><tr><th>מודל</th><th>תחזית</th><th>משקל</th></tr></thead>
                         <tbody>{rows}</tbody>
                     </table>
                 </div>
-
                 <div class="card" style="background:{brand_green}; color:#000;">
                     <h3 style="margin:0;">💰 ניתוח פולימרקט</h3>
                     <p>מחיר ל-{data['target']}: <strong>{price_val:.2f}¢</strong></p>
@@ -120,4 +112,33 @@ class IdolUltraOracle:
 
     def run_cycle(self):
         meteo = self.fetch_data()
-        if not meteo or 'daily'
+        if not meteo or 'daily' not in meteo:
+            print("Failed to get weather data.")
+            return
+        market = self.fetch_market()
+        points = {}
+        d = meteo['daily']
+        mapping = {
+            'ECMWF': 'temperature_2m_max_ecmwf_ifs04',
+            'UKMO': 'temperature_2m_max_ukmo_seamless',
+            'ICON': 'temperature_2m_max_icon_seamless',
+            'MeteoFrance': 'temperature_2m_max_meteofrance_seamless',
+            'GFS': 'temperature_2m_max_gfs_seamless'
+        }
+        for name, key in mapping.items():
+            if key in d and d[key][0] is not None:
+                points[name] = float(d[key][0])
+        if not points:
+            print("No valid points found.")
+            return
+        total_weight = sum(self.weights.get(n, 0.1) for n in points.keys())
+        avg = sum(t * self.weights.get(n, 0.1) for n, t in points.items()) / total_weight
+        target = f"{int(round(avg))}°C"
+        self.generate_dashboard({
+            'avg': avg, 'target': target, 'price': market.get(target, 0),
+            'time': datetime.now().strftime('%H:%M'), 'models': points
+        })
+
+if __name__ == "__main__":
+    URL = "https://polymarket.com/event/highest-temperature-in-london-on-april-17-2026"
+    IdolUltraOracle(URL).run_cycle()
