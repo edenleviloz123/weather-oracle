@@ -9,41 +9,40 @@
             .container { max-width: 480px; margin: auto; }
             .card { background: #111; border: 1px solid #222; border-radius: 24px; padding: 20px; margin-bottom: 15px; }
             .main-temp { font-size: 80px; font-weight: 900; color: #B5EBBF; text-align: center; margin: 0; }
-            .section-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; border-bottom: 1px solid #222; padding-bottom: 8px; color: #eee; }
+            .section-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; border-bottom: 1px solid #222; padding-bottom: 8px; }
             .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
             .stat-box { background: #1a1a1a; padding: 15px; border-radius: 18px; text-align: center; border: 1px solid #333; }
             .stat-label { font-size: 11px; color: #777; margin-bottom: 5px; }
             .stat-val { font-size: 22px; font-weight: bold; color: #B5EBBF; }
-            .info-text { font-size: 12px; color: #666; margin-top: 10px; line-height: 1.4; }
+            .info-box { background: #1a1a1a; border-radius: 12px; padding: 12px; margin-top: 10px; font-size: 12px; line-height: 1.5; color: #999; }
             table { width: 100%; border-collapse: collapse; }
             td, th { padding: 10px 0; border-bottom: 1px solid #1a1a1a; font-size: 14px; }
-            .footer { text-align: center; font-size: 10px; color: #444; margin-top: 30px; letter-spacing: 1px; }
+            .footer { text-align: center; font-size: 10px; color: #444; margin-top: 30px; }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="card">
-                <div class="section-title">📊 התחזית המשוקללת</div>
+                <div class="section-title">📊 תחזית משוקללת (Oracle)</div>
                 <div class="main-temp">18.37°C</div>
-                <div style="text-align:center; color:#555; font-size:13px;">ממוצע מבוסס 5 מודלים (לונדון)</div>
-                
+                <div style="text-align:center; color:#888; font-size:14px;">ממוצע משוקלל של 5 מודלי חיזוי מובילים</div>
                 <div class="stat-grid">
                     <div class="stat-box">
-                        <div class="stat-label">מדד ביטחון</div>
+                        <div class="stat-label">מדד ביטחון מודלים</div>
                         <div class="stat-val">92.8%</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-label">סטטוס שוק</div>
+                        <div class="stat-label">יעד מרכזי</div>
                         <div class="stat-val" style="color:#fff;">18°C</div>
                     </div>
                 </div>
-                <div class="info-text">
-                    * <b>מדד ביטחון:</b> מעל 80% מעיד על הסכמה רחבה בין המודלים. מתחת ל-60% מעיד על חוסר ודאות גבוה.
+                <div class="info-box">
+                    <b>מה זה מדד ביטחון?</b> בודק הסכמה בין מודלים. מעל 80% = הסכמה חזקה. מתחת ל-60% = חוסר ודאות גבוה (סיכון).
                 </div>
             </div>
 
             <div class="card" style="border-color: #222;">
-                <div class="section-title">⚖️ זיהוי ארביטראז' (Arbitrage)</div>
+                <div class="section-title">⚖️ ניתוח ארביטראז' (Arbitrage)</div>
                 <div class="stat-grid">
                     <div class="stat-box">
                         <div class="stat-label">הזדמנות קנייה</div>
@@ -51,18 +50,29 @@
                     </div>
                     <div class="stat-box">
                         <div class="stat-label">מדד כדאיות (EV)</div>
-                        <div class="stat-val">11.7</div>
+                        <div class="stat-val">12.5</div>
                     </div>
                 </div>
-                <div class="info-text">
-                    * <b>ארביטראז':</b> המערכת מזהה פער בין התחזית שלנו למחיר השוק (Polymarket). אם מופיע YES, השוק "טועה" והמחיר זול ביחס לביטחון המודלים.
+                <div class="info-box">
+                    <b>מה זה ארביטראז'?</b> זיהוי פער שבו השוק זול מהתחזית שלנו. <b>EV גבוה</b> אומר שהמתמטיקה לטובתך בטווח הארוך.
                 </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">📊 הימורי שוק (Polymarket)</div>
+                <table>
+                    <tr style="color:#666; font-size:12px;">
+                        <th style="text-align:right;">אפשרות</th>
+                        <th style="text-align:left;">מחיר (¢)</th>
+                    </tr>
+                    <tr><td style='text-align:right;'>18°C</td><td style='text-align:left; color:#B5EBBF; font-weight:bold;'>74¢</td></tr><tr><td style='text-align:right;'>17°C</td><td style='text-align:left; color:#B5EBBF; font-weight:bold;'>22¢</td></tr><tr><td style='text-align:right;'>19°C</td><td style='text-align:left; color:#B5EBBF; font-weight:bold;'>15¢</td></tr>
+                </table>
             </div>
 
             <div class="card">
                 <div class="section-title">🌡️ פירוט מודלים (נתונים יבשים)</div>
                 <table>
-                    <tr style="color:#666;">
+                    <tr style="color:#666; font-size:12px;">
                         <th style="text-align:right;">מודל</th>
                         <th style="text-align:center;">טמפ'</th>
                         <th style="text-align:left;">משקל</th>
@@ -72,7 +82,7 @@
             </div>
 
             <div class="footer">
-                סונכרן: 22:25:39 | מזהה ריצה: 971126 | THOUSANDS OF LOYAL ANGELS
+                סונכרן: 22:33:56 | מזהה ריצה: 437573 | THOUSANDS OF LOYAL ANGELS
             </div>
         </div>
     </body>
