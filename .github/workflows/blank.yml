@@ -1,0 +1,32 @@
+name: Update Weather Dashboard
+on:
+  schedule:
+    - cron: '0 * * * *' # פקודה שאומרת לגיטהאב להריץ את זה כל שעה עגולה
+  workflow_dispatch: # מוסיף כפתור שמאפשר לך להריץ את הבוט ידנית מתי שבא לך
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+          
+      - name: Install dependencies
+        run: |
+          pip install requests selenium webdriver-manager
+          
+      - name: Run bot
+        run: python weather_bot.py
+        
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "Weather Bot"
+          git config --global user.email "bot@idol-studios.com"
+          git add index.html
+          git commit -m "Auto-update dashboard" || exit 0
+          git push
