@@ -37,11 +37,10 @@ def get_live_poly_data():
     except: return None
 
 def calculate_ai_prob(points, target_temp_str):
-    """חישוב הסתברות AI לפי התפלגות נורמלית של המודלים"""
+    """חישוב הסתברות AI לפי התפלגות נורמלית"""
     target_val = int(''.join(filter(str.isdigit, target_temp_str)))
     vals = list(points.values())
     avg = sum(vals) / len(vals)
-    # סטיית תקן מינימלית של 0.6 כדי למנוע חלוקה באפס
     std = max(math.sqrt(sum((x - avg)**2 for x in vals) / len(vals)), 0.6)
     def cdf(x): return (1.0 + math.erf((x - avg) / (std * math.sqrt(2.0)))) / 2.0
     prob = (cdf(target_val + 0.5) - cdf(target_val - 0.5)) * 100
@@ -50,7 +49,7 @@ def calculate_ai_prob(points, target_temp_str):
 def run_bot():
     brand_green = "#B5EBBF"
     
-    # הגדרת זמנים (ישראל ולונדון)
+    # 1. ניהול זמנים (ישראל ולונדון)
     if pytz:
         tz_il = pytz.timezone('Asia/Jerusalem')
         tz_uk = pytz.timezone('Europe/London')
@@ -61,11 +60,12 @@ def run_bot():
         now_il = now_uk = datetime.now().strftime('%H:%M')
         date_str = datetime.now().strftime('%d/%m/%Y')
 
-    # נתוני מודלים ומשקלים
+    # 2. נתוני מודלים (ה-Manifest דורש את כולם)
     points = {"ECMWF": 18.5, "UKMO": 18.2, "GFS": 18.9, "ICON": 18.0, "MeteoFrance": 18.1}
     weights = {"ECMWF": 0.35, "UKMO": 0.25, "GFS": 0.15, "ICON": 0.15, "MeteoFrance": 0.10}
     avg_val = sum(points[n] * (weights[n]/sum(weights.values())) for n in points)
 
+    # 3. נתוני פולימרקט
     poly_data = get_live_poly_data()
     status_label = "LIVE" if poly_data else "OFFLINE"
     if not poly_data:
@@ -73,6 +73,7 @@ def run_bot():
                      {"temp": "18°C", "price": "49¢", "prob": "49%", "numeric_prob": 49},
                      {"temp": "19°C", "price": "21¢", "prob": "21%", "numeric_prob": 21}]
     
+    # 4. ניתוח ארביטראז'
     comparison_rows = ""
     arbitrage_signal = "NO"
     for opt in poly_data:
@@ -89,6 +90,7 @@ def run_bot():
             <td style="text-align:left; color:{color}; font-weight:bold;">{edge:+.1f}%</td>
         </tr>"""
 
+    # 5. בניית HTML (מוודא ששום רכיב לא נמחק)
     html = f"""
     <!DOCTYPE html>
     <html dir="rtl" lang="he">
@@ -114,15 +116,14 @@ def run_bot():
                 <div class="title">🎯 תחזית משוקללת (Oracle)</div>
                 <div class="main-val">{avg_val:.2f}°C</div>
                 <div class="desc">
-                    <b>מה זה?</b> הממוצע המשוקלל של 5 המודלים המובילים בעולם. 
-                    המשקלים מותאמים לדיוק ההיסטורי של כל מודל באזור לונדון.
+                    <b>מה זה?</b> ממוצע משוקלל של 5 מודלים (ECMWF, UKMO, GFS, ICON, MeteoFrance). 
                 </div>
             </div>
 
             <div class="card">
                 <div class="title">⚖️ ניתוח ארביטראז' (Edge)</div>
                 <div class="signal-box">
-                    <div style="font-size: 10px; color: #777; text-transform: uppercase;">הזדמנות קנייה (Arbitrage)</div>
+                    <div style="font-size: 10px; color: #777;">הזדמנות קנייה (Arbitrage)</div>
                     <div style="font-size: 28px; font-weight: bold; color: {brand_green if arbitrage_signal == "YES" else "#fff"};">{arbitrage_signal}</div>
                 </div>
                 <table>
@@ -135,9 +136,7 @@ def run_bot():
                     {comparison_rows}
                 </table>
                 <div class="desc">
-                    <b>איך לקרוא?</b> <br>
-                    1. <b>מחיר|שוק:</b> ההסתברות הנוכחית בפולימרקט. <br>
-                    2. <b>פער:</b> אם המספר <b>ירוק</b>, ה-AI שלנו צופה סיכוי גבוה יותר ממה שהשוק מתמחר.
+                    <b>איך לקרוא?</b> מחיר השוק (פולי) מול הסיכוי שה-AI צופה. מספר ירוק = הזדמנות.
                 </div>
             </div>
 
