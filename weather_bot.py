@@ -16,25 +16,25 @@ def get_live_poly_data(target_temp):
         found_options = []
         for m in resp:
             try:
-                # חילוץ המעלה מתוך שם השאלה (למשל: 18)
+                # חילוץ המעלה מתוך שם השאלה
                 val = int(''.join(filter(str.isdigit, m['question'])))
                 found_options.append((val, m))
             except: continue
         
         # מיון לפי מה שהכי קרוב לתחזית המודלים שלנו
         found_options.sort(key=lambda x: abs(x[0] - target_temp))
-        top_3 = found_options[:3] # לוקחים את ה-3 הכי קרובים
+        top_3 = found_options[:3]
         
         results = {}
         for temp, market in top_3:
-            # שליפת מחיר אחרון שנסחר (Last Trade Price) מהבורסה
+            # שליפת מחיר אחרון שנסחר מהבורסה
             price_data = client.get_last_trade_price(market['token_id'])
             price_cents = round(float(price_data.get('price', 0)) * 100)
             results[f"{temp}°C"] = price_cents
         return results
     except Exception as e:
         print(f"Poly Sync Error: {e}")
-        return {"17°C": 27, "18°C": 49, "19°C": 21} # Fallback
+        return {"17°C": 27, "18°C": 49, "19°C": 21}
 
 def run_bot():
     brand_green = "#B5EBBF"
@@ -78,9 +78,11 @@ def run_bot():
     has_arbitrage = "YES" if (market_price < 65 and confidence > 75) else "NO"
     ev_score = (confidence / market_price) * 10 if market_price > 0 else 0
 
-    # 4. יצירת ה-HTML המעוצב
+    # 4. יצירת ה-HTML המעוצב (תיקון הלולאה בשורה 83)
     rows_poly = "".join([f"<tr><td style='text-align:right;'>{opt}</td><td style='text-align:left; color:{brand_green}; font-weight:bold;'>{pr}¢</td></tr>" for opt, pr in poly_prices.items()])
-    rows_models = "".join([f"<tr><td style='text-align:right;'>{n}</td><td style='text-align:center; color:{brand_green};'>{t:.1f}°C</td><td style='text-align:left; color:#666;'>{int(weights[n]*100)}%</td></tr>" for n in points])
+    
+    # התיקון כאן: הוספתי (n, t) בתוך הלולאה כדי ש-t יהיה מוגדר
+    rows_models = "".join([f"<tr><td style='text-align:right;'>{n}</td><td style='text-align:center; color:{brand_green};'>{t:.1f}°C</td><td style='text-align:left; color:#666;'>{int(weights[n]*100)}%</td></tr>" for n, t in points.items()])
 
     html_content = f"""
     <!DOCTYPE html>
@@ -113,16 +115,14 @@ def run_bot():
                     <div class="stat-box"><div class="stat-label">מדד ביטחון</div><div class="stat-val">{confidence:.1f}%</div></div>
                     <div class="stat-box"><div class="stat-label">יעד מרכזי</div><div class="stat-val" style="color:#fff;">{target_label}</div></div>
                 </div>
-                <div class="info"><b>ביטחון:</b> מבוסס על הסכמה בין 5 מודלים. מעל 80% = סיגנל חזק.</div>
             </div>
 
             <div class="card" style="border-color: {brand_green if has_arbitrage == 'YES' else '#222'};">
                 <div class="section-title">⚖️ ארביטראז' פולימרקט (LIVE)</div>
                 <div class="stat-grid">
                     <div class="stat-box"><div class="stat-label">הזדמנות קנייה</div><div class="stat-val" style="color:{brand_green if has_arbitrage == 'YES' else '#fff'};">{has_arbitrage}</div></div>
-                    <div class="stat-box"><div class="stat-label">מדד כדאיות (EV)</div><div class="stat-val">{ev_score:.1f}</div></div>
+                    <div class="stat-box"><div class="stat-label">מדד EV</div><div class="stat-val">{ev_score:.1f}</div></div>
                 </div>
-                <div class="info"><b>ארביטראז':</b> המערכת זיהתה פער בין התחזית שלנו למחיר השוק בזמן אמת.</div>
             </div>
 
             <div class="card">
@@ -131,7 +131,7 @@ def run_bot():
             </div>
 
             <div class="card">
-                <div class="section-title">🌡️ פירוט מודלים (נתונים יבשים)</div>
+                <div class="section-title">🌡️ פירוט מודלים</div>
                 <table>{rows_models}</table>
             </div>
 
