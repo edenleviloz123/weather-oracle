@@ -12,7 +12,6 @@ class IdolUltraOracle:
     def __init__(self, market_url):
         self.market_url = market_url
         self.lat, self.lon = 51.5048, 0.0495
-        # משקלים אסטרטגיים לחישוב ממוצע (מתאים לניתוח נתונים חשבונאי)
         self.weights = {"ECMWF": 0.35, "UKMO": 0.25, "ICON": 0.15, "MeteoFrance": 0.10, "GFS": 0.10, "OpenWeather": 0.05}
 
     def fetch_data(self):
@@ -49,7 +48,6 @@ class IdolUltraOracle:
         brand_green = "#B5EBBF"
         roi = ((1 / data['price']) - 1) * 100 if data['price'] > 0 else 0
         
-        # חישוב הסתברויות לטווח של 3 מעלות
         target_int = int(round(data['avg']))
         range_probs = {}
         for offset in range(-1, 2): 
@@ -91,7 +89,7 @@ class IdolUltraOracle:
                     <div style="font-size: 14px; letter-spacing: 2px; color: #888;">תחזית משוקללת סופית</div>
                     <div class="main-temp">{data['avg']:.2f}°C</div>
                     <div class="explanation">
-                        <strong>ביאור לחישוב:</strong> כסטודנט לחשבונאות, חשוב להכיר את המודל: ECMWF מקבל משקל של 35% בשל דיוק היסטורי עדיף בבריטניה. הנתון מייצג ממוצע משוקלל של 5 מודלים שונים.
+                        <strong>הסבר טכני:</strong> הממוצע מחושב לפי משקלים קבועים: ECMWF (אירופאי) מקבל 35% בגלל דיוק גבוה בבריטניה. הנתון הוא שילוב של 5 מודלים שונים.
                     </div>
                 </div>
 
@@ -109,20 +107,20 @@ class IdolUltraOracle:
                 </div>
 
                 <div class="card">
-                    <h3>📊 פירוט נתונים גולמיים (Audit Trail)</h3>
+                    <h3>📊 פירוט נתונים גולמיים מכל המודלים</h3>
                     <table>
-                        <thead><tr><th>מקור דיווח</th><th>תחזית</th><th>משקל</th></tr></thead>
+                        <thead><tr><th>מקור דיווח</th><th>תחזית</th><th>משקל בחישוב</th></tr></thead>
                         <tbody>{rows}</tbody>
                     </table>
                 </div>
 
                 <div class="card" style="background: {brand_green}; color: #000;">
-                    <h3 style="margin:0;">💰 ניתוח כדאיות שוק</h3>
+                    <h3 style="margin:0;">💰 ניתוח שוק (Polymarket)</h3>
                     <p>מחיר שוק ליעד {data['target']}: <strong>{data['price']:.2f}¢</strong></p>
                     <p style="font-size: 24px; font-weight: bold; margin: 5px 0;">ROI פוטנציאלי: {roi:.1f}%</p>
                 </div>
                 
-                <p style="text-align: center; color: #444; font-size: 11px;">עודכן ב: {data['time']}</p>
+                <p style="text-align: center; color: #444; font-size: 11px;">IDOL ORACLE v7.0 | {data['time']}</p>
             </div>
         </body>
         </html>
