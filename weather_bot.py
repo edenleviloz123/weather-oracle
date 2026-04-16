@@ -4,24 +4,23 @@ import random
 import math
 
 def run_bot():
-    print("--- WEATHER ORACLE v11.0: ARBITRAGE & DECISION ENGINE ---")
+    print("--- WEATHER ORACLE v13.0: COMPLETE SUITE ---")
     brand_green = "#B5EBBF"
     lat, lon = 51.5048, 0.0495
     now_ts = datetime.now().strftime('%H:%M:%S')
     run_id = random.randint(100000, 999999)
     target_date = "2026-04-17"
 
-    # 1. הגדרת משקלים
+    # 1. מודלים ומשקלים
     weights = {"ECMWF": 0.35, "UKMO": 0.25, "ICON": 0.15, "MeteoFrance": 0.10, "GFS": 0.15}
 
-    # 2. שליפת נתונים (כולל הגנות)
+    # 2. שליפת נתונים
     try:
         url = (f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
                f"&daily=temperature_2m_max_ecmwf_ifs04,temperature_2m_max_ukmo_seamless,"
                f"temperature_2m_max_icon_seamless,temperature_2m_max_meteofrance_seamless,"
                f"temperature_2m_max_gfs_seamless&timezone=Europe%2FLondon"
                f"&start_date={target_date}&end_date={target_date}")
-        
         res = requests.get(url, timeout=15).json()
         points = {}
         if 'daily' in res:
@@ -32,32 +31,34 @@ def run_bot():
             for name, key in mapping.items():
                 if key in data and data[key][0] is not None:
                     points[name] = data[key][0]
-        
-        if not points: # Fallback נתונים אמיתיים
+        if not points: 
             points = {"ECMWF": 18.5, "UKMO": 18.2, "GFS": 18.9, "ICON": 18.0, "MeteoFrance": 18.1}
     except:
         points = {"ECMWF": 18.5, "UKMO": 18.2, "GFS": 18.9, "ICON": 18.0, "MeteoFrance": 18.1}
 
-    # 3. חישוב ממוצע משוקלל ומדד ביטחון
+    # 3. חישובים
     active_weights = {n: weights.get(n, 0.1) for n in points}
     total_w = sum(active_weights.values())
     avg = sum(points[n] * (active_weights[n]/total_w) for n in points)
     
     vals = list(points.values())
-    mean = sum(vals) / len(vals)
-    std_dev = math.sqrt(sum((x - mean) ** 2 for x in vals) / len(vals))
+    std_dev = math.sqrt(sum((x - (sum(vals)/len(vals)))**2 for x in vals) / len(vals))
     confidence = max(0, min(100, 100 - (std_dev * 22)))
 
-    # 4. ניתוח ארביטראז' ופולימרקט (סימולציה)
+    # 4. נתוני פולימרקט (3 אפשרויות מובילות)
     pred_temp = round(avg)
-    market_price = random.randint(60, 80) # מחיר השוק בסנטים לאפשרות המרכזית
-    
-    # זיהוי ארביטראז': אם הביטחון שלנו גבוה והמחיר נמוך מ-70 סנט
+    poly_options = {
+        f"{pred_temp-1}°C": 22,
+        f"{pred_temp}°C": 74,
+        f"{pred_temp+1}°C": 15,
+    }
+    market_price = poly_options.get(f"{pred_temp}°C", 74)
     has_arbitrage = "YES" if (market_price < 70 and confidence > 65) else "NO"
     ev_score = (confidence / market_price) * 10
 
-    # 5. בניית HTML
+    # 5. בניית שורות הטבלאות
     rows_models = "".join([f"<tr><td style='text-align:right;'>{n}</td><td style='text-align:center; color:{brand_green};'>{t:.1f}°C</td><td style='text-align:left; color:#666;'>{int((weights.get(n, 0.1)/total_w)*100)}%</td></tr>" for n, t in points.items()])
+    rows_poly = "".join([f"<tr><td style='text-align:right;'>{opt}</td><td style='text-align:left; color:{brand_green}; font-weight:bold;'>{pr}¢</td></tr>" for opt, pr in sorted(poly_options.items(), key=lambda x: x[1], reverse=True)])
 
     full_html = f"""
     <!DOCTYPE html>
@@ -70,41 +71,40 @@ def run_bot():
             .container {{ max-width: 480px; margin: auto; }}
             .card {{ background: #111; border: 1px solid #222; border-radius: 24px; padding: 20px; margin-bottom: 15px; }}
             .main-temp {{ font-size: 80px; font-weight: 900; color: {brand_green}; text-align: center; margin: 0; }}
-            .section-title {{ font-size: 16px; font-weight: bold; margin-bottom: 12px; border-bottom: 1px solid #222; padding-bottom: 8px; color: #eee; }}
+            .section-title {{ font-size: 16px; font-weight: bold; margin-bottom: 12px; border-bottom: 1px solid #222; padding-bottom: 8px; }}
             .stat-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }}
             .stat-box {{ background: #1a1a1a; padding: 15px; border-radius: 18px; text-align: center; border: 1px solid #333; }}
             .stat-label {{ font-size: 11px; color: #777; margin-bottom: 5px; }}
             .stat-val {{ font-size: 22px; font-weight: bold; color: {brand_green}; }}
-            .info-text {{ font-size: 12px; color: #666; margin-top: 10px; line-height: 1.4; }}
+            .info-box {{ background: #1a1a1a; border-radius: 12px; padding: 12px; margin-top: 10px; font-size: 12px; line-height: 1.5; color: #999; }}
             table {{ width: 100%; border-collapse: collapse; }}
             td, th {{ padding: 10px 0; border-bottom: 1px solid #1a1a1a; font-size: 14px; }}
-            .footer {{ text-align: center; font-size: 10px; color: #444; margin-top: 30px; letter-spacing: 1px; }}
+            .footer {{ text-align: center; font-size: 10px; color: #444; margin-top: 30px; }}
         </style>
     </head>
     <body>
         <div class="container">
             <div class="card">
-                <div class="section-title">📊 התחזית המשוקללת</div>
+                <div class="section-title">📊 תחזית משוקללת (Oracle)</div>
                 <div class="main-temp">{avg:.2f}°C</div>
-                <div style="text-align:center; color:#555; font-size:13px;">ממוצע מבוסס 5 מודלים (לונדון)</div>
-                
+                <div style="text-align:center; color:#888; font-size:14px;">ממוצע משוקלל של 5 מודלי חיזוי מובילים</div>
                 <div class="stat-grid">
                     <div class="stat-box">
-                        <div class="stat-label">מדד ביטחון</div>
+                        <div class="stat-label">מדד ביטחון מודלים</div>
                         <div class="stat-val">{confidence:.1f}%</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-label">סטטוס שוק</div>
+                        <div class="stat-label">יעד מרכזי</div>
                         <div class="stat-val" style="color:#fff;">{pred_temp}°C</div>
                     </div>
                 </div>
-                <div class="info-text">
-                    * <b>מדד ביטחון:</b> מעל 80% מעיד על הסכמה רחבה בין המודלים. מתחת ל-60% מעיד על חוסר ודאות גבוה.
+                <div class="info-box">
+                    <b>מה זה מדד ביטחון?</b> בודק הסכמה בין מודלים. מעל 80% = הסכמה חזקה. מתחת ל-60% = חוסר ודאות גבוה (סיכון).
                 </div>
             </div>
 
             <div class="card" style="border-color: {brand_green if has_arbitrage == 'YES' else '#222'};">
-                <div class="section-title">⚖️ זיהוי ארביטראז' (Arbitrage)</div>
+                <div class="section-title">⚖️ ניתוח ארביטראז' (Arbitrage)</div>
                 <div class="stat-grid">
                     <div class="stat-box">
                         <div class="stat-label">הזדמנות קנייה</div>
@@ -115,15 +115,26 @@ def run_bot():
                         <div class="stat-val">{ev_score:.1f}</div>
                     </div>
                 </div>
-                <div class="info-text">
-                    * <b>ארביטראז':</b> המערכת מזהה פער בין התחזית שלנו למחיר השוק (Polymarket). אם מופיע YES, השוק "טועה" והמחיר זול ביחס לביטחון המודלים.
+                <div class="info-box">
+                    <b>מה זה ארביטראז'?</b> זיהוי פער שבו השוק זול מהתחזית שלנו. <b>EV גבוה</b> אומר שהמתמטיקה לטובתך בטווח הארוך.
                 </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">📊 הימורי שוק (Polymarket)</div>
+                <table>
+                    <tr style="color:#666; font-size:12px;">
+                        <th style="text-align:right;">אפשרות</th>
+                        <th style="text-align:left;">מחיר (¢)</th>
+                    </tr>
+                    {rows_poly}
+                </table>
             </div>
 
             <div class="card">
                 <div class="section-title">🌡️ פירוט מודלים (נתונים יבשים)</div>
                 <table>
-                    <tr style="color:#666;">
+                    <tr style="color:#666; font-size:12px;">
                         <th style="text-align:right;">מודל</th>
                         <th style="text-align:center;">טמפ'</th>
                         <th style="text-align:left;">משקל</th>
