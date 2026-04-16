@@ -2,8 +2,8 @@ name: Update Weather Dashboard
 
 on:
   schedule:
-    - cron: '0 * * * *' # רץ כל שעה עגולה
-  workflow_dispatch: # מאפשר הפעלה ידנית
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -25,13 +25,20 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Run bot
-        run: python weather_bot.py
+      - name: Run bot and verify file
+        run: |
+          python weather_bot.py
+          echo "--- BOTS FINISHED. CHECKING FILES: ---"
+          ls -la
+          echo "--- CHECKING IF NEW RUN ID EXISTS: ---"
+          grep "FORCED UPDATE RUN ID" index.html || echo "COULD NOT FIND RUN ID!"
 
       - name: Commit and push changes
         run: |
           git config --local user.name "Idol-Oracle-Bot"
           git config --local user.email "bot@idolstudios.com"
           git add index.html
-          git commit -m "Oracle Auto-Sync: $(date +'%Y-%m-%d %H:%M:%S')" || exit 0
-          git push origin main --force
+          echo "--- GIT STATUS: ---"
+          git status
+          git commit -m "Oracle Auto-Sync: $(date +'%Y-%m-%d %H:%M:%S')" || echo "Git says: No changes to commit"
+          git push origin main
