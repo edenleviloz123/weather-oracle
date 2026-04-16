@@ -6,17 +6,16 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # נותן לבוט רשות לכתוב קבצים לתוך הגיטהאב שלך
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -24,8 +23,7 @@ jobs:
           python-version: '3.9'
 
       - name: Install dependencies
-        run: |
-          pip install requests selenium webdriver-manager
+        run: pip install requests
 
       - name: Run bot
         run: python weather_bot.py
@@ -35,6 +33,5 @@ jobs:
           git config --global user.name "Weather Bot"
           git config --global user.email "bot@weather-oracle.com"
           git add index.html
-          git commit -m "Auto-update dashboard v7.2" || echo "No changes to commit"
-          git pull --rebase --autostash origin main
-          git push
+          git commit -m "Emergency Update v7.3" || exit 0
+          git push origin main --force
