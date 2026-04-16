@@ -2,8 +2,8 @@ name: Weather Oracle Update
 
 on:
   schedule:
-    - cron: '*/10 * * * *' # רץ כל 10 דקות
-  workflow_dispatch: # מאפשר לך להריץ ידנית בלחיצת כפתור
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -32,4 +32,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
-          publish_branch: gh-pages # וודא שזה תואם להגדרות ה-Pages שלך
+          force_orphan: true # זה מכריח את העדכון גם אם יש התנגשויות
