@@ -120,7 +120,7 @@ class IdolUltraOracle:
         if not points: return
         avg = sum(t * self.weights.get(n, 0.1) for n, t in points.items()) / sum(self.weights.get(n, 0.1) for n in points.keys())
         target = f"{int(round(avg))}°C"
-        self.generate_dashboard({'avg': avg, 'target': target, 'price': market.get(target, 0), 'time': datetime.now().strftime('%H:%M'), 'models': points})
+        self.generate_dashboard({'avg': avg, 'target': target, 'price': market.get(target, 0), 'time': datetime.now().strftime('%d/%m %H:%M'), 'models': points})
 
 if __name__ == "__main__":
     URL = "https://polymarket.com/event/highest-temperature-in-london-on-april-17-2026"
