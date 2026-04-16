@@ -12,11 +12,9 @@ class IdolUltraOracle:
     def __init__(self, market_url):
         self.market_url = market_url
         self.lat, self.lon = 51.5048, 0.0495
-        # הגדרת משקלים (ECMWF מקבל את הנתח הכי גדול)
         self.weights = {"ECMWF": 0.35, "UKMO": 0.25, "ICON": 0.15, "MeteoFrance": 0.10, "GFS": 0.15}
 
     def fetch_data(self):
-        # שאילתה מורחבת שמושכת את כל המודלים האירופאים והאמריקאים
         url = (f"https://api.open-meteo.com/v1/forecast?latitude={self.lat}&longitude={self.lon}"
                f"&daily=temperature_2m_max_ecmwf_ifs04,temperature_2m_max_ukmo_seamless,temperature_2m_max_icon_seamless,temperature_2m_max_meteofrance_seamless,temperature_2m_max_gfs_seamless"
                f"&timezone=Europe%2FLondon&start_date=2026-04-17&end_date=2026-04-17")
@@ -24,9 +22,7 @@ class IdolUltraOracle:
             res = requests.get(url, timeout=20)
             data = res.json()
             return data if 'daily' in data else None
-        except Exception as e:
-            print(f"Error fetching weather: {e}")
-            return None
+        except: return None
 
     def fetch_market(self):
         options = Options()
@@ -38,7 +34,7 @@ class IdolUltraOracle:
         prices = {}
         try:
             driver.get(self.market_url)
-            time.sleep(25) # זמן טעינה ארוך לפולימרקט
+            time.sleep(25)
             page_text = driver.find_element(By.TAG_NAME, "body").text
             for label in ["16", "17", "18", "19", "20"]:
                 match = re.search(rf"{label}°C.*?(\d+)¢", page_text)
@@ -48,11 +44,11 @@ class IdolUltraOracle:
         finally: driver.quit()
 
     def generate_dashboard(self, data):
-        brand_green = "#B5EBBF" # הצבע של Idol Studios
+        brand_green = "#B5EBBF"
         price_val = data.get('price', 0)
         roi = ((1 / price_val) - 1) * 100 if price_val > 0 else 0
-        
         target_int = int(round(data['avg']))
+        
         range_probs = {}
         for offset in range(-1, 2): 
             temp = target_int + offset
@@ -69,68 +65,40 @@ class IdolUltraOracle:
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>IDOL ORACLE v7.5</title>
             <style>
-                body {{ background: #050505; color: #fff; font-family: system-ui, -apple-system, sans-serif; padding: 20px; }}
+                body {{ background: #050505; color: #fff; font-family: system-ui, sans-serif; padding: 20px; }}
                 .container {{ max-width: 800px; margin: auto; }}
-                .card {{ background: #111; border-radius: 24px; padding: 30px; margin-bottom: 25px; border: 1px solid #222; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
-                .main-temp {{ font-size: 90px; color: {brand_green}; font-weight: 900; text-align: center; line-height: 1; }}
-                .prob-bar {{ height: 12px; background: #222; border-radius: 6px; margin: 12px 0; overflow: hidden; }}
-                .prob-fill {{ height: 100%; background: {brand_green}; transition: width 1s ease-in-out; }}
-                table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
+                .card {{ background: #111; border-radius: 24px; padding: 30px; margin-bottom: 25px; border: 1px solid #222; }}
+                .main-temp {{ font-size: 80px; color: {brand_green}; font-weight: 900; text-align: center; }}
+                .prob-bar {{ height: 12px; background: #222; border-radius: 6px; margin: 10px 0; overflow: hidden; }}
+                .prob-fill {{ height: 100%; background: {brand_green}; }}
+                table {{ width: 100%; border-collapse: collapse; }}
                 td, th {{ padding: 15px; border-bottom: 1px solid #222; text-align: right; }}
-                .footer {{ text-align: center; color: #444; font-size: 12px; margin-top: 40px; }}
             </style>
         </head>
         <body>
             <div class="container">
-                <header style="text-align:center; margin-bottom:40px;">
-                    <h1 style="color:{brand_green}; font-size: 32px; margin:0;">IDOL ORACLE</h1>
-                    <p style="color:#888;">London (LHR) | April 17, 2026</p>
-                </header>
-
+                <h1 style="text-align:center; color:{brand_green}">IDOL ORACLE</h1>
+                <p style="text-align:center; color:#888;">London | April 17, 2026</p>
                 <div class="card">
-                    <div style="text-align:center; color:#888; text-transform:uppercase; font-size:12px; letter-spacing:2px;">Weighted Average Forecast</div>
                     <div class="main-temp">{data['avg']:.2f}°C</div>
-                    <p style="text-align:center; color:#666; font-size:14px; margin-top:15px;">החישוב כולל 5 מודלים (ECMWF, UKMO, ICON, MF, GFS)</p>
+                    <p style="text-align:center; color:#aaa;">ממוצע משוקלל (כולל ECMWF)</p>
                 </div>
-
                 <div class="card">
-                    <h3 style="margin-top:0;">🎯 Model Agreement (3-Degree Range)</h3>
-                    { "".join([f'''
-                        <div style="margin-bottom:20px;">
-                            <div style="display:flex; justify-content:space-between; font-size:15px;">
-                                <span>{temp}°C</span>
-                                <span style="color:{brand_green}">{prob:.0f}% Support</span>
-                            </div>
-                            <div class="prob-bar"><div class="prob-fill" style="width: {prob}%"></div></div>
-                        </div>
-                    ''' for temp, prob in range_probs.items()]) }
+                    <h3>🎯 הסתברות סטטיסטית</h3>
+                    { "".join([f'<div>{t}°C ({p:.0f}%)<div class="prob-bar"><div class="prob-fill" style="width:{p}%"></div></div></div>' for t,p in range_probs.items()]) }
                 </div>
-
                 <div class="card">
-                    <h3 style="margin-top:0;">📊 Raw Model Data</h3>
+                    <h3>📊 פירוט מודלים</h3>
                     <table>
-                        <thead><tr><th>Model</th><th>Forecast</th><th>Weight</th></tr></thead>
+                        <thead><tr><th>מודל</th><th>תחזית</th><th>משקל</th></tr></thead>
                         <tbody>{rows}</tbody>
                     </table>
                 </div>
-
-                <div class="card" style="background: {brand_green}; color: #000; border:none;">
-                    <h3 style="margin-top:0;">💰 Polymarket Analysis</h3>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <p style="margin:0; opacity:0.7;">Target: {data['target']}</p>
-                            <p style="font-size:24px; font-weight:bold; margin:0;">Price: {price_val:.2f}¢</p>
-                        </div>
-                        <div style="text-align:right;">
-                            <p style="margin:0; opacity:0.7;">Potential Return</p>
-                            <p style="font-size:32px; font-weight:900; margin:0;">{roi:.1f}%</p>
-                        </div>
-                    </div>
+                <div class="card" style="background:{brand_green}; color:#000;">
+                    <h3 style="margin:0;">💰 ניתוח פולימרקט</h3>
+                    <p>מחיר ל-{data['target']}: <strong>{price_val:.2f}¢</strong> | ROI: <strong>{roi:.1f}%</strong></p>
                 </div>
-                
-                <div class="footer">
-                    Updated: {data['time']} (Israel Time) | V7.5 Stable
-                </div>
+                <p style="text-align:center; color:#444; font-size:12px;">עודכן ב: {data['time']}</p>
             </div>
         </body>
         </html>
@@ -141,31 +109,18 @@ class IdolUltraOracle:
     def run_cycle(self):
         meteo = self.fetch_data()
         if not meteo: return
-
         market = self.fetch_market()
         points = {}
         d = meteo['daily']
-        mapping = {
-            'ECMWF': 'temperature_2m_max_ecmwf_ifs04',
-            'UKMO': 'temperature_2m_max_ukmo_seamless',
-            'ICON': 'temperature_2m_max_icon_seamless',
-            'MeteoFrance': 'temperature_2m_max_meteofrance_seamless',
-            'GFS': 'temperature_2m_max_gfs_seamless'
-        }
+        mapping = {'ECMWF': 'temperature_2m_max_ecmwf_ifs04', 'UKMO': 'temperature_2m_max_ukmo_seamless', 
+                   'ICON': 'temperature_2m_max_icon_seamless', 'MeteoFrance': 'temperature_2m_max_meteofrance_seamless', 
+                   'GFS': 'temperature_2m_max_gfs_seamless'}
         for name, key in mapping.items():
-            if key in d and d[key][0] is not None:
-                points[name] = float(d[key][0])
-
+            if key in d and d[key][0] is not None: points[name] = float(d[key][0])
         if not points: return
-
-        total_weight = sum(self.weights.get(n, 0.1) for n in points.keys())
-        avg = sum(t * self.weights.get(n, 0.1) for n, t in points.items()) / total_weight
+        avg = sum(t * self.weights.get(n, 0.1) for n, t in points.items()) / sum(self.weights.get(n, 0.1) for n in points.keys())
         target = f"{int(round(avg))}°C"
-        
-        self.generate_dashboard({
-            'avg': avg, 'target': target, 'price': market.get(target, 0),
-            'time': datetime.now().strftime('%d/%m %H:%M'), 'models': points
-        })
+        self.generate_dashboard({'avg': avg, 'target': target, 'price': market.get(target, 0), 'time': datetime.now().strftime('%H:%M'), 'models': points})
 
 if __name__ == "__main__":
     URL = "https://polymarket.com/event/highest-temperature-in-london-on-april-17-2026"
