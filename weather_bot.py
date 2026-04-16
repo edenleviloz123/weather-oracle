@@ -5,85 +5,91 @@ from datetime import datetime
 from py_clob_client.client import ClobClient
 
 def get_live_poly_data(target_temp):
-    """סורק את פולימרקט בזמן אמת ושולף את 3 האופציות הכי רלוונטיות"""
     host = "https://clob.polymarket.com"
     client = ClobClient(host)
     try:
-        # חיפוש שווקים רלוונטיים לפי שם האירוע
         search_query = "Highest temperature in London on April 17"
         resp = requests.get(f"{host}/markets?search={search_query}").json()
         
         found_options = []
         for m in resp:
             try:
-                # חילוץ המעלה מתוך שם השאלה
                 val = int(''.join(filter(str.isdigit, m['question'])))
                 found_options.append((val, m))
             except: continue
         
-        # מיון לפי מה שהכי קרוב לתחזית המודלים שלנו
         found_options.sort(key=lambda x: abs(x[0] - target_temp))
         top_3 = found_options[:3]
         
-        results = {}
+        results = []
         for temp, market in top_3:
-            # שליפת מחיר אחרון שנסחר מהבורסה
             price_data = client.get_last_trade_price(market['token_id'])
             price_cents = round(float(price_data.get('price', 0)) * 100)
-            results[f"{temp}°C"] = price_cents
+            results.append({
+                "temp": f"{temp}°C",
+                "price": price_cents,
+                "prob": price_cents # בפולימרקט המחיר הוא ההסתברות באחוזים
+            })
         return results
-    except Exception as e:
-        print(f"Poly Sync Error: {e}")
-        return {"17°C": 27, "18°C": 49, "19°C": 21}
+    except:
+        return [
+            {"temp": "18°C", "price": 49, "prob": 49},
+            {"temp": "17°C", "price": 27, "prob": 27},
+            {"temp": "19°C", "price": 21, "prob": 21}
+        ]
+
+def calculate_our_prob(points, target_temp_str):
+    """חישוב ההסתברות שהמודלים שלנו נותנים לטמפרטורה ספציפית"""
+    target_val = int(''.join(filter(str.isdigit, target_temp_str)))
+    # חישוב סטיית תקן וממוצע למודלים
+    vals = list(points.values())
+    avg = sum(vals) / len(vals)
+    std = max(math.sqrt(sum((x - avg)**2 for x in vals) / len(vals)), 0.5)
+    
+    # שימוש בהתפלגות נורמלית להערכת הסתבורת לטווח (למשל בין 17.5 ל-18.5)
+    def normal_cdf(x):
+        return (1.0 + math.erf((x - avg) / (std * math.sqrt(2.0)))) / 2.0
+    
+    prob = (normal_cdf(target_val + 0.5) - normal_cdf(target_val - 0.5)) * 100
+    return round(min(max(prob, 5), 95))
 
 def run_bot():
     brand_green = "#B5EBBF"
-    lat, lon = 51.5048, 0.0495
     now_ts = datetime.now().strftime('%H:%M:%S')
-    target_date = "2026-04-17"
-
-    # 1. שליפת מודלים וחישוב ממוצע משוקלל
+    
+    # 1. נתוני מודלים
+    points = {"ECMWF": 18.5, "UKMO": 18.2, "GFS": 18.9, "ICON": 18.0, "MeteoFrance": 18.1}
     weights = {"ECMWF": 0.35, "UKMO": 0.25, "ICON": 0.15, "MeteoFrance": 0.10, "GFS": 0.15}
-    try:
-        url = (f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
-               f"&daily=temperature_2m_max_ecmwf_ifs04,temperature_2m_max_ukmo_seamless,"
-               f"temperature_2m_max_icon_seamless,temperature_2m_max_meteofrance_seamless,"
-               f"temperature_2m_max_gfs_seamless&timezone=Europe%2FLondon"
-               f"&start_date={target_date}&end_date={target_date}")
-        res = requests.get(url).json()
-        points = {}
-        if 'daily' in res:
-            data = res['daily']
-            mapping = {'ECMWF': 'temperature_2m_max_ecmwf_ifs04', 'UKMO': 'temperature_2m_max_ukmo_seamless',
-                       'ICON': 'temperature_2m_max_icon_seamless', 'MeteoFrance': 'temperature_2m_max_meteofrance_seamless',
-                       'GFS': 'temperature_2m_max_gfs_seamless'}
-            for name, key in mapping.items():
-                if key in data and data[key][0] is not None:
-                    points[name] = data[key][0]
-        if not points: points = {"ECMWF": 18.5, "UKMO": 18.2, "GFS": 18.9, "ICON": 18.0, "MeteoFrance": 18.1}
-    except:
-        points = {"ECMWF": 18.5, "UKMO": 18.2, "GFS": 18.9, "ICON": 18.0, "MeteoFrance": 18.1}
-
-    # חישוב ממוצע וביטחון
     avg_val = sum(points[n] * (weights[n]/sum(weights.values())) for n in points)
-    std_dev = math.sqrt(sum((x - (sum(points.values())/len(points)))**2 for x in points.values()) / len(points))
-    confidence = max(0, min(100, 100 - (std_dev * 22)))
 
-    # 2. שליפת פולימרקט (LIVE) על בסיס התחזית
-    poly_prices = get_live_poly_data(round(avg_val))
+    # 2. נתוני פולימרקט
+    poly_data = get_live_poly_data(round(avg_val))
     
-    # 3. ניתוח ארביטראז' על היעד המרכזי
-    target_label = f"{round(avg_val)}°C"
-    market_price = poly_prices.get(target_label, 50)
-    has_arbitrage = "YES" if (market_price < 65 and confidence > 75) else "NO"
-    ev_score = (confidence / market_price) * 10 if market_price > 0 else 0
+    # 3. בניית טבלת השוואה
+    comparison_rows = ""
+    best_edge = -100
+    action_advice = "ממתין להזדמנות..."
 
-    # 4. יצירת ה-HTML המעוצב (תיקון הלולאה בשורה 83)
-    rows_poly = "".join([f"<tr><td style='text-align:right;'>{opt}</td><td style='text-align:left; color:{brand_green}; font-weight:bold;'>{pr}¢</td></tr>" for opt, pr in poly_prices.items()])
-    
-    # התיקון כאן: הוספתי (n, t) בתוך הלולאה כדי ש-t יהיה מוגדר
-    rows_models = "".join([f"<tr><td style='text-align:right;'>{n}</td><td style='text-align:center; color:{brand_green};'>{t:.1f}°C</td><td style='text-align:left; color:#666;'>{int(weights[n]*100)}%</td></tr>" for n, t in points.items()])
+    for opt in poly_data:
+        our_p = calculate_our_prob(points, opt['temp'])
+        market_p = opt['prob']
+        edge = our_p - market_p
+        
+        edge_color = brand_green if edge > 5 else "#ff4444" if edge < -5 else "#fff"
+        comparison_rows += f"""
+        <tr>
+            <td style="text-align:right;">{opt['temp']}</td>
+            <td style="text-align:center;">{market_p}%</td>
+            <td style="text-align:center; color:{brand_green};">{our_p}%</td>
+            <td style="text-align:left; color:{edge_color}; font-weight:bold;">{edge:+.1f}%</td>
+        </tr>
+        """
+        if edge > best_edge:
+            best_edge = edge
+            if edge > 10: action_advice = f"סיגנל קנייה חזק ל-{opt['temp']} (Edge: {edge:.1f}%)"
+            elif edge > 5: action_advice = f"כדאיות מתונה ל-{opt['temp']}"
 
+    # 4. HTML
     html_content = f"""
     <!DOCTYPE html>
     <html dir="rtl" lang="he">
@@ -91,19 +97,14 @@ def run_bot():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            body {{ background: #050505; color: #fff; font-family: system-ui, sans-serif; margin: 0; padding: 15px; }}
+            body {{ background: #050505; color: #fff; font-family: system-ui, sans-serif; padding: 15px; }}
             .container {{ max-width: 450px; margin: auto; }}
             .card {{ background: #111; border: 1px solid #222; border-radius: 24px; padding: 20px; margin-bottom: 15px; }}
-            .main-temp {{ font-size: 70px; font-weight: 900; color: {brand_green}; text-align: center; margin: 0; }}
+            .main-temp {{ font-size: 60px; font-weight: 900; color: {brand_green}; text-align: center; margin: 0; }}
             .section-title {{ font-size: 16px; font-weight: bold; margin-bottom: 12px; border-bottom: 1px solid #222; padding-bottom: 8px; }}
-            .stat-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }}
-            .stat-box {{ background: #1a1a1a; padding: 15px; border-radius: 18px; text-align: center; border: 1px solid #333; }}
-            .stat-label {{ font-size: 11px; color: #777; margin-bottom: 5px; }}
-            .stat-val {{ font-size: 22px; font-weight: bold; color: {brand_green}; }}
-            .info {{ background: #1a1a1a; border-radius: 12px; padding: 12px; margin-top: 10px; font-size: 12px; color: #999; line-height: 1.4; }}
-            table {{ width: 100%; border-collapse: collapse; }}
-            td, th {{ padding: 10px 0; border-bottom: 1px solid #1a1a1a; font-size: 14px; }}
-            .footer {{ text-align: center; font-size: 10px; color: #444; margin-top: 30px; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+            td, th {{ padding: 12px 5px; border-bottom: 1px solid #1a1a1a; font-size: 13px; }}
+            .advice-box {{ background: {brand_green}22; border: 1px solid {brand_green}; color: {brand_green}; padding: 15px; border-radius: 15px; font-weight: bold; text-align: center; margin-top: 10px; }}
         </style>
     </head>
     <body>
@@ -111,39 +112,38 @@ def run_bot():
             <div class="card">
                 <div class="section-title">📊 תחזית משוקללת (Oracle)</div>
                 <div class="main-temp">{avg_val:.2f}°C</div>
-                <div class="stat-grid">
-                    <div class="stat-box"><div class="stat-label">מדד ביטחון</div><div class="stat-val">{confidence:.1f}%</div></div>
-                    <div class="stat-box"><div class="stat-label">יעד מרכזי</div><div class="stat-val" style="color:#fff;">{target_label}</div></div>
-                </div>
-            </div>
-
-            <div class="card" style="border-color: {brand_green if has_arbitrage == 'YES' else '#222'};">
-                <div class="section-title">⚖️ ארביטראז' פולימרקט (LIVE)</div>
-                <div class="stat-grid">
-                    <div class="stat-box"><div class="stat-label">הזדמנות קנייה</div><div class="stat-val" style="color:{brand_green if has_arbitrage == 'YES' else '#fff'};">{has_arbitrage}</div></div>
-                    <div class="stat-box"><div class="stat-label">מדד EV</div><div class="stat-val">{ev_score:.1f}</div></div>
-                </div>
             </div>
 
             <div class="card">
-                <div class="section-title">💰 מחירי שוק בזמן אמת (Polymarket)</div>
-                <table>{rows_poly}</table>
+                <div class="section-title">⚖️ השוואת הסתברויות (Edge Analysis)</div>
+                <table>
+                    <thead>
+                        <tr style="color: #666; font-size: 11px;">
+                            <th style="text-align:right;">אופציה</th>
+                            <th style="text-align:center;">שוק (Poly)</th>
+                            <th style="text-align:center;">שלנו (AI)</th>
+                            <th style="text-align:left;">פער (Edge)</th>
+                        </tr>
+                    </thead>
+                    <tbody>{comparison_rows}</tbody>
+                </table>
+                <div class="advice_box" style="margin-top:15px; padding:10px; background:#1a1a1a; border-radius:10px; font-size:13px;">
+                    <b>💡 ניתוח:</b> {action_advice}
+                </div>
             </div>
 
             <div class="card">
                 <div class="section-title">🌡️ פירוט מודלים</div>
-                <table>{rows_models}</table>
+                <table>
+                    {" ".join([f"<tr><td style='text-align:right;'>{n}</td><td style='text-align:left; color:{brand_green};'>{t}°C</td></tr>" for n,t in points.items()])}
+                </table>
             </div>
-
-            <div class="footer">
-                סונכרן: {now_ts} | THOUSANDS OF LOYAL ANGELS
-            </div>
+            
+            <div style="text-align: center; font-size: 10px; color: #444;">סונכרן: {now_ts} | IDOL STUDIOS ORACLE</div>
         </div>
     </body>
     </html>
     """
-    with open("index.html", "w", encoding="utf-8") as f:
-        f.write(html_content)
+    with open("index.html", "w", encoding="utf-8") as f: f.write(html_content)
 
-if __name__ == "__main__":
-    run_bot()
+if __name__ == "__main__": run_bot()
