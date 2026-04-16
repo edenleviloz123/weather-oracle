@@ -14,8 +14,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # מושך את כל היסטוריית הגיט כדי למנוע שגיאות דחיפה
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -23,8 +21,7 @@ jobs:
           python-version: '3.9'
 
       - name: Install dependencies
-        run: |
-          pip install requests selenium webdriver-manager
+        run: pip install requests selenium webdriver-manager
 
       - name: Run bot
         run: python weather_bot.py
@@ -34,7 +31,5 @@ jobs:
           git config --global user.name "Weather Bot"
           git config --global user.email "bot@weather-oracle.com"
           git add index.html
-          # הפקודה הבאה מבצעת עדכון גם אם לא השתנו נתונים
           git commit -m "Oracle Update: $(date)" || exit 0
-          # החלף את main ב-master אם זה שם הענף שלך
           git push origin main --force
