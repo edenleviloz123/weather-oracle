@@ -3,23 +3,55 @@
     <html dir="rtl" lang="he">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>IDOL ORACLE</title>
         <style>
-            body { background: #050505; color: #fff; font-family: sans-serif; text-align: center; padding: 20px; }
-            .card { background: #111; border: 1px solid #222; padding: 30px; border-radius: 20px; max-width: 400px; margin: auto; }
-            .temp { font-size: 60px; color: #B5EBBF; font-weight: bold; }
-            .footer { color: #333; font-size: 10px; margin-top: 20px; }
+            body { background: #050505; color: #fff; font-family: system-ui, sans-serif; margin: 0; padding: 20px; }
+            .container { max-width: 450px; margin: auto; }
+            .card { background: #111; border: 1px solid #222; border-radius: 28px; padding: 25px; margin-bottom: 20px; }
+            .brand-header { color: #B5EBBF; letter-spacing: 4px; font-size: 12px; font-weight: bold; margin-bottom: 20px; text-align: center; }
+            .temp-display { font-size: 72px; font-weight: 900; color: #B5EBBF; text-align: center; margin: 10px 0; }
+            .market-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+            .market-box { background: #1a1a1a; border: 1px solid #333; padding: 15px; border-radius: 18px; text-align: center; }
+            .price { font-size: 24px; font-weight: bold; color: #B5EBBF; }
+            table { width: 100%; border-collapse: collapse; }
+            tr { border-bottom: 1px solid #222; }
+            .footer { text-align: center; font-size: 10px; color: #444; margin-top: 40px; letter-spacing: 2px; }
         </style>
     </head>
     <body>
-        <div class="card">
-            <h2 style="color:#B5EBBF; letter-spacing: 2px;">IDOL ORACLE</h2>
-            <div class="temp">18.40°C</div>
-            <p>לונדון | 2026-04-17</p>
-            <p style="font-size:12px; color:#666;">סטטוס: זמני (ממתין ל-API)</p>
-            <table style="width:100%; margin-top:10px;"></table>
+        <div class="container">
+            <div class="card">
+                <div class="brand-header">IDOL STUDIOS ORACLE</div>
+                <div style="text-align:center; color:#666; font-size:14px;">LONDON | 2026-04-17</div>
+                <div class="temp-display">18.40°C</div>
+                <div style="text-align:center; font-size:12px; color:#444;">STATUS: FALLBACK MODE</div>
+            </div>
+
+            <div class="card">
+                <div style="font-weight:bold; margin-bottom:15px;">📊 POLYMARKET ANALYSIS</div>
+                <div class="market-grid">
+                    <div class="market-box">
+                        <div style="font-size:11px; color:#888;">MARKET PRICE</div>
+                        <div class="price">74¢</div>
+                    </div>
+                    <div class="market-box">
+                        <div style="font-size:11px; color:#888;">ARBITRAGE</div>
+                        <div class="price" style="color:#fff;">NO</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="font-weight:bold; margin-bottom:15px;">🌡️ MODEL BREAKDOWN</div>
+                <table></table>
+            </div>
+
+            <div class="footer">
+                THOUSANDS OF LOYAL ANGELS<br>
+                SYNCED: 2026-04-16 22:03:58 | ID: 367918
+            </div>
         </div>
-        <div class="footer">SYNC: 2026-04-16 22:01:14 | ID: 77876</div>
     </body>
     </html>
     
