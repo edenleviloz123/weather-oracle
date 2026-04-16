@@ -26,7 +26,8 @@ jobs:
       - name: Commit and push changes
         run: |
           git config --global user.name "Weather Bot"
-          git config --global user.email "bot@idol-studios.com"
+          git config --global user.email "bot@weather-oracle.com"
           git add index.html
+          git pull --rebase origin main # מסנכרן את השינויים מהשרת לפני הדחיפה
           git commit -m "Auto-update dashboard" || exit 0
           git push
