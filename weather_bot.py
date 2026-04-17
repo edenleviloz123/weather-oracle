@@ -14,34 +14,28 @@ def get_market_data():
     api_key = os.getenv("POLY_API_KEY")
     ts = int(time.time())
     url = f"https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=1000&_={ts}"
-    
     headers = {'User-Agent': 'Mozilla/5.0'}
     if api_key: headers['Authorization'] = f'Bearer {api_key}'
     
-    results = []
-    found_any_weather = []
-    
+    results, weather_list = [], []
     try:
         resp = requests.get(url, headers=headers, timeout=20)
-        if resp.status_code != 200:
-            return [], f"API Error {resp.status_code}", []
-            
-        markets = resp.json()
-        for m in markets:
-            q = m.get('question', "").lower()
-            if any(x in q for x in ["temp", "weather", "degree", "high temperature"]):
-                found_any_weather.append(q)
-                if any(x in q for x in ["london", "heathrow", "uk"]):
-                    token_id = m.get('clobTokenIds', [""])[0]
-                    if not token_id: continue
-                    try:
-                        price = round(float(json.loads(m.get('outcomePrices', '[0]'))[0]) * 100, 1)
-                        title = m.get('groupItemTitle', q)
-                        temp_val = int(''.join(filter(str.isdigit, title.split('°')[0])))
-                        results.append({"temp": temp_val, "poly_price": price})
-                    except: continue
-        
-        return sorted(results, key=lambda x: x['temp']), "", found_any_weather
+        if resp.status_code == 200:
+            markets = resp.json()
+            for m in markets:
+                q = m.get('question', "").lower()
+                if any(x in q for x in ["temp", "weather", "degree"]):
+                    weather_list.append(q)
+                    if any(x in q for x in ["london", "heathrow", "uk"]):
+                        token_id = m.get('clobTokenIds', [""])[0]
+                        if not token_id: continue
+                        try:
+                            price = round(float(json.loads(m.get('outcomePrices', '[0]'))[0]) * 100, 1)
+                            title = m.get('groupItemTitle', q)
+                            temp_val = int(''.join(filter(str.isdigit, title.split('°')[0])))
+                            results.append({"temp": temp_val, "poly_price": price})
+                        except: continue
+        return sorted(results, key=lambda x: x['temp']), "", weather_list
     except Exception as e:
         return [], str(e), []
 
@@ -53,12 +47,11 @@ def calculate_ai_prob(avg, target_val):
 def run_bot():
     tz_il, tz_uk = pytz.timezone('Asia/Jerusalem'), pytz.timezone('Europe/London')
     now_il, now_uk = datetime.now(tz_il).strftime('%H:%M'), datetime.now(tz_uk).strftime('%H:%M')
-
     models = {"MeteoFrance": 18.4, "ICON": 18.1, "GFS": 18.9, "UKMO": 18.2, "ECMWF": 18.6}
     avg_oracle = round(sum(models.values()) / len(models), 2)
     lhr_live = 18.2 
 
-    poly_data, err_msg, weather_list = get_market_data()
+    poly_data, err, weather_list = get_market_data()
     processed = []
     for opt in poly_data:
         our_prob = calculate_ai_prob(avg_oracle, opt['temp'])
@@ -67,11 +60,8 @@ def run_bot():
 
     best = max(processed, key=lambda x: x['edge']) if processed else None
     signal = "YES" if best and best['edge'] > 3.0 else "NO"
-
     model_html = "".join([f"<div style='text-align:center;'><div style='color:#555; font-size:10px;'>{k}</div><div>{v}°</div></div>" for k,v in models.items()])
     rows = "".join([f"<tr style='border-bottom:1px solid #1a1a1a;'><td style='padding:15px;'>{p['label']}</td><td style='text-align:center;'>{p['poly']}¢</td><td style='text-align:center;'>{p['ours']}%</td><td style='color:{GOLD_COLOR if p['edge']>10 else (BRAND_GREEN if p['edge']>0 else ERROR_RED)}; font-weight:bold; text-align:left;'>{p['edge']:+.1f}%</td></tr>" for p in processed])
-
-    weather_debug = "".join([f"<div style='margin-bottom:5px;'>• {w}</div>" for w in weather_list[:5]])
 
     html = f"""
     <!DOCTYPE html>
@@ -82,10 +72,9 @@ def run_bot():
         .card {{ background:#0a0a0a; border:1px solid #1a1a1a; border-radius:24px; padding:20px; margin-bottom:15px; }}
         .title {{ font-size:11px; color:#555; font-weight:bold; margin-bottom:15px; text-transform:uppercase; }}
         table {{ width:100%; border-collapse:collapse; }}
-        th {{ font-size:10px; color:#333; padding-bottom:10px; }}
     </style></head>
     <body>
-        <div style="text-align:center; color:{BRAND_GREEN}; padding:15px; font-weight:900;">ORACLE MONSTER v6.1</div>
+        <div style="text-align:center; color:{BRAND_GREEN}; padding:15px; font-weight:900;">ORACLE MONSTER v6.2</div>
         <div class="card">
             <div class="title">📊 דאטה מודלים</div>
             <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; border-bottom:1px solid #1a1a1a; padding-bottom:15px; margin-bottom:15px;">{model_html}</div>
@@ -99,11 +88,11 @@ def run_bot():
             <div style="text-align:center; padding:25px; border:2px solid {BRAND_GREEN if signal=='YES' else '#222'}; border-radius:20px; margin-bottom:20px;">
                 <div style="font-size:55px; font-weight:900; color:{BRAND_GREEN if signal=='YES' else '#fff'};">{signal if processed else 'SCANNING'}</div>
             </div>
-            {f"<table><tr><th style='text-align:right;'>מעלות</th><th>פולי</th><th>AI %</th><th style='text-align:left;'>EDGE</th></tr>{rows}</table>" if processed else f"<div style='font-size:10px; color:#ffaa00; padding:15px; direction:ltr; text-align:left;'><b>DEEP SCAN:</b><br>{weather_debug if weather_list else 'No weather markets found.'}</div>"}
+            {f"<table><tr><th style='text-align:right;'>מעלות</th><th>פולי</th><th>AI %</th><th style='text-align:left;'>EDGE</th></tr>{rows}</table>" if processed else f"<div style='font-size:10px; color:#ffaa00; padding:15px; direction:ltr;'><b>SCANNING:</b> Found {len(weather_list)} potential weather markets.</div>"}
         </div>
         <div class="card">
             <div class="title">🧠 נימוק</div>
-            <div style="font-size:14px; color:#888;">{f"פער של {best['edge']}% זוהה בטווח {best['label']}." if processed else "מחפש חוזים רלוונטיים..."}</div>
+            <div style="font-size:14px; color:#888;">{f"פער של {best['edge']}% בטווח {best['label']}." if processed else "מחפש ארביטראז'..."}</div>
         </div>
         <div style="display:flex; justify-content:center; gap:20px; font-size:12px; color:#444; padding:20px;">
             <div>🇬🇧 London: {now_uk}</div>
