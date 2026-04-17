@@ -1,4 +1,4 @@
-name: Polymarket Weather Oracle
+name: Polymarket Weather Oracle v6
 
 on:
   schedule:
@@ -33,5 +33,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "V5.5 Update - Enhanced Market Scanner" || exit 0
+          git commit -m "V6.0 Deep Scan Update" || exit 0
           git push
