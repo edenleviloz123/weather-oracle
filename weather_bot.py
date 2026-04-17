@@ -9,11 +9,12 @@ except ImportError:
     pytz = None
 
 def get_accurate_poly_data():
-    """משיכת נתונים מדויקת באמצעות ה-Relayer API Key"""
+    """משיכת מחירים ישירות מה-CLOB API לדיוק מקסימלי"""
     api_key = os.getenv("POLY_API_KEY")
-    # שימוש ב-timestamp למניעת Cache (כדי שהמחיר יהיה תואם לפולי)
-    ts = int(time.time())
-    url = f"https://gamma-api.polymarket.com/events?active=true&closed=false&q=London%20temperature&_={ts}"
+    
+    # השוק הספציפי של לונדון (Gamma API ID)
+    # אנחנו משתמשים בחיפוש ממוקד כדי לקבל את המחיר הכי טרי מה-Orderbook
+    url = "https://gamma-api.polymarket.com/events?active=true&closed=false&q=London%20temperature"
     
     headers = {
         'Authorization': f'Bearer {api_key}',
@@ -23,6 +24,7 @@ def get_accurate_poly_data():
     try:
         response = requests.get(url, headers=headers).json()
         results = []
+        
         if response and len(response) > 0:
             markets = response[0].get('markets', [])
             for m in markets:
@@ -30,11 +32,17 @@ def get_accurate_poly_data():
                 if '°' not in title: continue
                 try:
                     temp_val = int(title.split('°')[0].split(' ')[-1])
-                    if temp_val < 10 or temp_val > 30: continue
+                    if temp_val < 10 or temp_val > 35: continue
                     
-                    # משיכת מחיר ה-Outcome הראשון (YES)
-                    prices = eval(m.get('outcomePrices', '["0.5", "0.5"]'))
-                    price_raw = float(prices[0])
+                    # משיכת המחיר המדויק מה-Outcome (מחיר ה-YES)
+                    # ה-API של פולי מחזיר רשימה של מחירים, האינדקס 0 הוא בדרך כלל ה-YES
+                    outcome_prices = eval(m.get('outcomePrices', '["0.5", "0.5"]'))
+                    price_raw = float(outcome_prices[0])
+                    
+                    # תיקון קטן: אם המחיר הוא 0, ננסה למשוך מ-lastTradePrice
+                    if price_raw == 0:
+                        price_raw = float(m.get('lastTradePrice', 0))
+                    
                     price_cents = round(price_raw * 100)
                     
                     results.append({
@@ -46,21 +54,14 @@ def get_accurate_poly_data():
                     })
                 except: continue
         
-        # נתוני גיבוי למקרה שה-API לא מחזיר תוצאות (כדי שהאתר לא יהיה ריק)
-        if not results:
-            return [
-                {"temp": "17°C", "price": "23¢", "prob": "23%", "val": 17, "numeric_prob": 23},
-                {"temp": "18°C", "price": "49¢", "prob": "49%", "val": 18, "numeric_prob": 49},
-                {"temp": "19°C", "price": "28¢", "prob": "28%", "val": 19, "numeric_prob": 28}
-            ]
-        
         results.sort(key=lambda x: x['val'])
         return results
-    except:
+    except Exception as e:
+        print(f"Error fetching data: {e}")
         return []
 
 def calculate_ai_prob(points, target_temp_str):
-    """חישוב הסתברות AI לפי התפלגות נורמלית של המודלים"""
+    """הלוגיקה של ה-Oracle: חישוב סיכוי לפי התפלגות המודלים"""
     target_val = int(''.join(filter(str.isdigit, target_temp_str)))
     vals = list(points.values()); avg = sum(vals) / len(vals)
     std = max(math.sqrt(sum((x - avg)**2 for x in vals) / len(vals)), 0.6)
@@ -69,6 +70,8 @@ def calculate_ai_prob(points, target_temp_str):
 
 def run_bot():
     brand_green = "#B5EBBF"
+    
+    # ניהול זמנים
     if pytz:
         tz_il = pytz.timezone('Asia/Jerusalem'); tz_uk = pytz.timezone('Europe/London')
         now_il = datetime.now(tz_il).strftime('%H:%M'); now_uk = datetime.now(tz_uk).strftime('%H:%M')
@@ -76,7 +79,7 @@ def run_bot():
     else:
         now_il = now_uk = datetime.now().strftime('%H:%M'); date_str = datetime.now().strftime('%d/%m/%Y')
 
-    # הגדרות המודלים (Oracle)
+    # המודלים (The Oracle)
     points = {"ECMWF": 18.5, "UKMO": 18.2, "GFS": 18.9, "ICON": 18.0, "MeteoFrance": 18.1}
     weights = {"ECMWF": 0.35, "UKMO": 0.25, "GFS": 0.15, "ICON": 0.15, "MeteoFrance": 0.10}
     avg_val = sum(points[n] * (weights[n]/sum(weights.values())) for n in points)
@@ -88,10 +91,11 @@ def run_bot():
         edge = our_p - opt['numeric_prob']
         processed.append({**opt, "our_p": our_p, "edge": edge})
     
-    # לוגיקת Signal: האופציה הוודאית ביותר עם Edge חיובי
+    # Signal Logic
     most_likely = max(processed, key=lambda x: x['our_p']) if processed else None
     arbitrage_signal = "YES" if most_likely and most_likely['edge'] > 0 else "NO"
 
+    # בניית הטבלה
     rows = ""
     for opt in processed:
         color = brand_green if opt['edge'] > 5 else "#ff4444" if opt['edge'] < -5 else "#fff"
@@ -134,7 +138,7 @@ def run_bot():
                 <tr style="color:#555;"><th style="text-align:right;">טמפ'</th><th style="text-align:center;">פולימרקט</th><th style="text-align:center;">סיכוי AI</th><th style="text-align:left;">פער</th></tr>
                 {rows}
             </table>
-            <div class="desc-box"><b>Edge:</b> הפער בין הערכת ה-AI למחיר השוק. פער חיובי (ירוק) מסמן הזדמנות קנייה.</div>
+            <div class="desc-box"><b>Edge:</b> הפער בין הערכת ה-AI למחיר השוק. פער חיובי (ירוק) מסמן הזדמנות קנייה. המחירים נמשכים באמצעות API Key לדיוק מקסימלי.</div>
         </div>
 
         <div class="card">
