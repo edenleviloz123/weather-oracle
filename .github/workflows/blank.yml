@@ -1,46 +1,38 @@
-name: Weather Oracle Update
+name: Polymarket Weather Oracle
 
+# הבוט ירוץ כל 15 דקות וגם ניתן להרצה ידנית
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Install dependencies
-        run: |
-          pip install requests pytz
+        # הוספתי כאן את pytz בשביל השעונים
+        run: pip install requests pytz
 
-      - name: Run weather bot
+      - name: Run Weather Bot
+        # כאן הבוט "מושך" את המפתח הסודי שהגדרת ב-Secrets
+        env:
+          POLY_API_KEY: ${{ secrets.POLY_API_KEY }}
         run: python weather_bot.py
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Auto-update Polymarket Arbitrage Data" || exit 0
+          git push
