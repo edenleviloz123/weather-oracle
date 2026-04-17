@@ -75,7 +75,7 @@ def run_bot():
         table {{ width:100%; border-collapse:collapse; }}
     </style></head>
     <body>
-        <div style="text-align:center; color:{BRAND_GREEN}; padding:15px; font-weight:900;">ORACLE MONSTER v6.5</div>
+        <div style="text-align:center; color:{BRAND_GREEN}; padding:15px; font-weight:900;">ORACLE MONSTER v6.6</div>
         <div class="card">
             <div class="title">📊 דאטה מודלים</div>
             <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; border-bottom:1px solid #1a1a1a; padding-bottom:15px; margin-bottom:15px;">{model_html}</div>
@@ -89,11 +89,11 @@ def run_bot():
             <div style="text-align:center; padding:25px; border:2px solid {BRAND_GREEN if signal=='YES' else '#222'}; border-radius:20px; margin-bottom:20px;">
                 <div style="font-size:55px; font-weight:900; color:{BRAND_GREEN if signal=='YES' else '#fff'};">{signal if processed else 'SCANNING'}</div>
             </div>
-            {f"<table><tr><th style='text-align:right;'>מעלות</th><th>פולי</th><th>AI %</th><th style='text-align:left;'>EDGE</th></tr>{rows}</table>" if processed else f"<div style='font-size:10px; color:#ffaa00; padding:15px; direction:ltr;'>SCANNING: Markets Found ({len(weather_list)}).</div>"}
+            {f"<table><tr><th style='text-align:right;'>מעלות</th><th>פולי</th><th>AI %</th><th style='text-align:left;'>EDGE</th></tr>{rows}</table>" if processed else f"<div style='font-size:10px; color:#ffaa00; padding:15px; direction:ltr;'>SCANNING: Found {len(weather_list)} markets.</div>"}
         </div>
         <div class="card">
-            <div class="title">🧠 נימוק (Rationale)</div>
-            <div style="font-size:14px; color:#888;">{f"סיגנל {signal} מבוסס על פער בטווח {best['label']}." if processed else "מחפש ארביטראז'..."}</div>
+            <div class="title">🧠 נימוק</div>
+            <div style="font-size:14px; color:#888;">{f"הזדמנות ארביטראז' בטווח {best['label']} עם פער של {best['edge']}%." if processed else "מנתח שווקים פעילים..."}</div>
         </div>
         <div style="display:flex; justify-content:center; gap:25px; font-size:12px; color:#555; padding:20px;">
             <div>🇬🇧 London: {now_uk}</div>
