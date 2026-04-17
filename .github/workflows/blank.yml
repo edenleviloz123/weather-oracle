@@ -1,4 +1,4 @@
-name: Polymarket Weather Oracle v6.1
+name: Polymarket Weather Oracle v6.2
 
 on:
   schedule:
@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # חשוב כדי לאפשר מיזוג שינויים
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -35,5 +37,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "V6.1 Fix Dependencies and UI" || exit 0
-          git push
+          # משיכת שינויים לפני הדחיפה כדי למנוע את השגיאה שקיבלת
+          git pull --rebase origin main
+          git commit -m "V6.2 Auto-update with conflict resolution" || exit 0
+          git push origin main
