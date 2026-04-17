@@ -8,7 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # השורה הזו קריטית כדי שהבוט יוכל לשמור את האתר החדש!
     permissions:
       contents: write
 
@@ -34,5 +33,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "Auto-update Polymarket Arbitrage Data" || exit 0
+          git commit -m "V5.5 Update - Enhanced Market Scanner" || exit 0
           git push
