@@ -60,6 +60,7 @@ def run_bot():
 
     best = max(processed, key=lambda x: x['edge']) if processed else None
     signal = "YES" if best and best['edge'] > 3.0 else "NO"
+    
     model_html = "".join([f"<div style='text-align:center;'><div style='color:#555; font-size:10px;'>{k}</div><div>{v}°</div></div>" for k,v in models.items()])
     rows = "".join([f"<tr style='border-bottom:1px solid #1a1a1a;'><td style='padding:15px;'>{p['label']}</td><td style='text-align:center;'>{p['poly']}¢</td><td style='text-align:center;'>{p['ours']}%</td><td style='color:{GOLD_COLOR if p['edge']>10 else (BRAND_GREEN if p['edge']>0 else ERROR_RED)}; font-weight:bold; text-align:left;'>{p['edge']:+.1f}%</td></tr>" for p in processed])
 
@@ -74,7 +75,7 @@ def run_bot():
         table {{ width:100%; border-collapse:collapse; }}
     </style></head>
     <body>
-        <div style="text-align:center; color:{BRAND_GREEN}; padding:15px; font-weight:900; letter-spacing:2px;">ORACLE MONSTER v6.4</div>
+        <div style="text-align:center; color:{BRAND_GREEN}; padding:15px; font-weight:900;">ORACLE MONSTER v6.5</div>
         <div class="card">
             <div class="title">📊 דאטה מודלים</div>
             <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; border-bottom:1px solid #1a1a1a; padding-bottom:15px; margin-bottom:15px;">{model_html}</div>
@@ -88,11 +89,11 @@ def run_bot():
             <div style="text-align:center; padding:25px; border:2px solid {BRAND_GREEN if signal=='YES' else '#222'}; border-radius:20px; margin-bottom:20px;">
                 <div style="font-size:55px; font-weight:900; color:{BRAND_GREEN if signal=='YES' else '#fff'};">{signal if processed else 'SCANNING'}</div>
             </div>
-            {f"<table><tr><th style='text-align:right;'>מעלות</th><th>פולי</th><th>AI %</th><th style='text-align:left;'>EDGE</th></tr>{rows}</table>" if processed else f"<div style='font-size:10px; color:#ffaa00; padding:15px; direction:ltr;'>SCANNING: Found {len(weather_list)} markets.</div>"}
+            {f"<table><tr><th style='text-align:right;'>מעלות</th><th>פולי</th><th>AI %</th><th style='text-align:left;'>EDGE</th></tr>{rows}</table>" if processed else f"<div style='font-size:10px; color:#ffaa00; padding:15px; direction:ltr;'>SCANNING: Markets Found ({len(weather_list)}).</div>"}
         </div>
         <div class="card">
-            <div class="title">🧠 נימוק</div>
-            <div style="font-size:14px; color:#888;">{f"זוהה פער בטווח {best['label']}." if processed else "מחפש ארביטראז'..."}</div>
+            <div class="title">🧠 נימוק (Rationale)</div>
+            <div style="font-size:14px; color:#888;">{f"סיגנל {signal} מבוסס על פער בטווח {best['label']}." if processed else "מחפש ארביטראז'..."}</div>
         </div>
         <div style="display:flex; justify-content:center; gap:25px; font-size:12px; color:#555; padding:20px;">
             <div>🇬🇧 London: {now_uk}</div>
