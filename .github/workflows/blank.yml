@@ -1,4 +1,4 @@
-name: Polymarket Weather Oracle v6.5
+name: Polymarket Weather Oracle v6.6
 
 on:
   schedule:
@@ -14,12 +14,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          # הסרנו את שורת ה-cache שגרמה לשגיאה
 
       - name: Install dependencies
         run: pip install requests pytz
@@ -33,7 +34,13 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # פתרון לשגיאה 128:
           git add index.html
-          git pull --rebase origin main
-          git commit -m "V6.5 Final Deployment - Fix Build Error" || exit 0
+          git stash                          # שומר את ה-index.html שיצרנו בצד
+          git pull --rebase origin main      # מושך עדכונים מהשרת באופן נקי
+          git stash pop                      # מחזיר את ה-index.html שלנו
+          
+          git add index.html
+          git commit -m "V6.6 Auto-update with Stash/Pop" || exit 0
           git push origin main
