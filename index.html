@@ -8,59 +8,56 @@
             body { background:#000; color:#fff; font-family:system-ui; padding:15px; margin:0; line-height:1.4; }
             .card { background:#0a0a0a; border:1px solid #1a1a1a; border-radius:20px; padding:20px; margin-bottom:15px; }
             .header-area { text-align:center; padding:20px 0; }
-            .main-title { font-size:28px; font-weight:900; letter-spacing:1px; margin:0; display:flex; align-items:center; justify-content:center; gap:10px; }
-            .status-dot { width:12px; height:12px; background:#B5EBBF; border-radius:50%; box-shadow: 0 0 10px #B5EBBF; }
-            .subtitle { color:#666; font-size:14px; margin-top:5px; }
-            .signal-box { text-align:center; padding:25px; border:2px solid #B5EBBF; border-radius:20px; margin:15px 0; }
-            .recommendation { font-size:38px; font-weight:900; color:#B5EBBF; margin:5px 0; }
+            .status-dot { width:12px; height:12px; background:#B5EBBF; border-radius:50%; box-shadow: 0 0 10px #B5EBBF; display:inline-block; margin-left:10px; }
+            .signal-box { text-align:center; padding:25px; border:2px solid #222; border-radius:20px; margin:15px 0; }
+            .recommendation { font-size:38px; font-weight:900; color:#fff; margin:5px 0; }
             table { width:100%; border-collapse:collapse; text-align:center; margin-top:10px; }
             th { font-size:11px; color:#444; padding-bottom:10px; border-bottom:1px solid #1a1a1a; }
             td { padding:12px 5px; border-bottom:1px solid #111; }
-            .rationale-section { background:#111; padding:15px; border-radius:15px; border-right:4px solid #B5EBBF; }
-            .rationale-title { font-weight:bold; color:#B5EBBF; margin-bottom:8px; }
-            .section-label { font-size:11px; color:#555; margin-bottom:10px; display:flex; align-items:center; gap:5px; }
+            .rationale { background:#111; padding:15px; border-radius:15px; border-right:4px solid #B5EBBF; font-size:14px; color:#ccc; }
+            .live-stats { display:flex; justify-content:space-around; background:#111; padding:15px; border-radius:15px; margin-bottom:15px; text-align:center; }
         </style>
     </head>
     <body>
         <div class="header-area">
-            <h1 class="main-title"><span class="status-dot"></span> POLYMARKET weather</h1>
-            <div class="subtitle">לונדון (LHR) • אירוע: 17/04/2026</div>
+            <h1 style="margin:0;"><span class="status-dot"></span> POLYMARKET weather</h1>
+            <div style="color:#666; font-size:14px; margin-top:5px;">לונדון (LHR) • 17/04/2026</div>
         </div>
 
         <div class="card">
-            <div class="section-label">⚖️ החלטת מערכת וארביטראז'</div>
+            <div style="font-size:11px; color:#555; margin-bottom:10px;">⚖️ החלטת מערכת וארביטראז'</div>
             <div class="signal-box">
                 <div style="font-size:14px; color:#555;">RECOMMENDED ACTION</div>
-                <div class="recommendation">לרכוש: 19°C</div>
+                <div class="recommendation">להמתין - אין ארביטראז' בטוח</div>
             </div>
-            <table><tr><th>חוזה (טמפ')</th><th>מחיר פולי</th><th>סיכוי AI</th><th>Edge</th></tr><tr><td>16°C</td><td style='font-weight:bold; color:#fff;'>$0.00</td><td>0.3%</td><td style='color:#B5EBBF; font-weight:bold;'>+0.2%</td></tr><tr><td>17°C</td><td style='font-weight:bold; color:#fff;'>$0.00</td><td>8.3%</td><td style='color:#B5EBBF; font-weight:bold;'>+8.2%</td></tr><tr><td>18°C</td><td style='font-weight:bold; color:#fff;'>$0.98</td><td>43.8%</td><td style='color:#FF4444; font-weight:bold;'>-54.2%</td></tr><tr><td>19°C</td><td style='font-weight:bold; color:#fff;'>$0.01</td><td>40.9%</td><td style='color:#FFD700; font-weight:bold;'>+39.4%</td></tr><tr><td>20°C</td><td style='font-weight:bold; color:#fff;'>$0.00</td><td>6.7%</td><td style='color:#B5EBBF; font-weight:bold;'>+6.4%</td></tr><tr><td>21°C</td><td style='font-weight:bold; color:#fff;'>$0.00</td><td>0.2%</td><td style='color:#B5EBBF; font-weight:bold;'>+0.2%</td></tr><tr><td>22°C or higher</td><td style='font-weight:bold; color:#fff;'>$0.00</td><td>0.0%</td><td style='color:#FF4444; font-weight:bold;'>-0.1%</td></tr></table>
+            <table><tr><th>חוזה</th><th>מחיר פולי</th><th>סיכוי AI</th><th>Edge</th></tr><tr><td>17°C</td><td style='font-weight:bold;'>$0.00</td><td>0.0%</td><td style='color:#FF4444; font-weight:bold;'>-0.1%</td></tr><tr><td>18°C</td><td style='font-weight:bold;'>$0.98</td><td>0.0%</td><td style='color:#FF4444; font-weight:bold;'>-97.8%</td></tr><tr><td>19°C</td><td style='font-weight:bold;'>$0.02</td><td>0.0%</td><td style='color:#FF4444; font-weight:bold;'>-1.7%</td></tr><tr><td>20°C</td><td style='font-weight:bold;'>$0.00</td><td>0.0%</td><td style='color:#FF4444; font-weight:bold;'>-0.4%</td></tr><tr><td>21°C</td><td style='font-weight:bold;'>$0.00</td><td>0.0%</td><td style='color:#FF4444; font-weight:bold;'>-0.1%</td></tr><tr><td>22°C or higher</td><td style='font-weight:bold;'>$0.00</td><td>0.0%</td><td style='color:#FF4444; font-weight:bold;'>-0.1%</td></tr></table>
         </div>
 
         <div class="card">
-            <div class="section-label">📝 ניתוח החלטה (Decision Rationale)</div>
-            <div class="rationale-section">
-                <div class="rationale-title">מסקנה מבוססת נתוני זמן אמת:</div>
-                <div style="font-size:14px; color:#ccc;">
-                    זוהה ארביטראז' בחוזה <b>19°C</b>. המחיר $0.01 משקף הסתברות שוק נמוכה מדי ביחס לתחזית ה-AI המעודכנת.
-                </div>
+            <div style="font-size:11px; color:#555; margin-bottom:10px;">📝 ניתוח החלטה (Rationale)</div>
+            <div class="rationale">
+                המערכת לא זיהתה הזדמנות קנייה מעל רף ה-25% וה-Edge הנדרש.
+                <br><br>
+                <b>סטטוס זמן:</b> עברנו את שעת השיא (0:00). המערכת מחמירה עם סיכויי התחממות.
             </div>
         </div>
 
         <div class="card">
-            <div class="section-label">📊 מודלים בשידור חי (Live Models)</div>
-            <div style="display:flex; justify-content:space-around; background:#111; padding:15px; border-radius:15px; margin-bottom:15px;">
-                <div style="text-align:center;"><small style="color:#555;">ממוצע מודלים</small><div style="font-size:24px; font-weight:bold; color:#B5EBBF;">18.46°</div></div>
-                <div style="text-align:center;"><small style="color:#555;">LHR LIVE</small><div style="font-size:24px; font-weight:bold;">16.9°</div></div>
+            <div style="font-size:11px; color:#555; margin-bottom:10px;">📊 נתוני אמת וזיכרון מודלים</div>
+            <div class="live-stats">
+                <div><small style="color:#555;">שיא נמדד (Max)</small><div style="font-size:22px; font-weight:bold; color:#FFD700;">0.0°</div></div>
+                <div><small style="color:#555;">טמפ' עכשיו</small><div style="font-size:22px; font-weight:bold;">16.7°</div></div>
+                <div><small style="color:#555;">תחזית ממוצעת</small><div style="font-size:22px; font-weight:bold; color:#B5EBBF;">0°</div></div>
             </div>
             <table style="text-align:right;">
-                <thead><tr><th style="text-align:right;">מודל</th><th>תחזית</th><th>משקל</th><th style="text-align:right;">סטטוס</th></tr></thead>
-                <tbody><tr><td style='color:#B5EBBF'>ECMWF</td><td>18.6°</td><td>30%</td><td style='font-size:11px; color:#888; text-align:right;'>המודל האירופי - נחשב למדויק ביותר בעולם.</td></tr><tr><td style='color:#B5EBBF'>UKMO</td><td>18.2°</td><td>25%</td><td style='font-size:11px; color:#888; text-align:right;'>מודל השירות הבריטי - דיוק מקסימלי לאזור לונדון.</td></tr><tr><td style='color:#B5EBBF'>GFS</td><td>18.9°</td><td>20%</td><td style='font-size:11px; color:#888; text-align:right;'>המודל האמריקאי - מצוין לזיהוי מגמות.</td></tr><tr><td style='color:#B5EBBF'>ICON</td><td>18.1°</td><td>15%</td><td style='font-size:11px; color:#888; text-align:right;'>מודל גרמני ברזולוציה גבוהה.</td></tr><tr><td style='color:#B5EBBF'>MeteoFrance</td><td>18.4°</td><td>10%</td><td style='font-size:11px; color:#888; text-align:right;'>מודל צרפתי המתמחה במערכות אירופאיות.</td></tr></tbody>
+                <thead><tr><th style="text-align:right;">מודל</th><th>שיא</th><th>משקל</th><th style="text-align:right;">תיאור</th><th>סטטוס</th></tr></thead>
+                <tbody><tr><td style='color:#B5EBBF'>ECMWF</td><td>18.0°</td><td>30%</td><td style='font-size:11px; color:#888;'>המודל האירופי - נחשב למדויק ביותר בעולם.</td><td style='font-size:11px; color:#B5EBBF;'>N/A</td></tr><tr><td style='color:#B5EBBF'>UKMO</td><td>18.0°</td><td>25%</td><td style='font-size:11px; color:#888;'>מודל השירות הבריטי - דיוק מקסימלי לאזור.</td><td style='font-size:11px; color:#B5EBBF;'>N/A</td></tr><tr><td style='color:#B5EBBF'>GFS</td><td>18.0°</td><td>20%</td><td style='font-size:11px; color:#888;'>המודל האמריקאי - מצוין לזיהוי מגמות.</td><td style='font-size:11px; color:#B5EBBF;'>N/A</td></tr><tr><td style='color:#B5EBBF'>ICON</td><td>18.0°</td><td>15%</td><td style='font-size:11px; color:#888;'>מודל גרמני ברזולוציה גבוהה.</td><td style='font-size:11px; color:#B5EBBF;'>N/A</td></tr><tr><td style='color:#B5EBBF'>MeteoFrance</td><td>18.0°</td><td>10%</td><td style='font-size:11px; color:#888;'>מודל צרפתי המתמחה במערכות אירופאיות.</td><td style='font-size:11px; color:#B5EBBF;'>N/A</td></tr></tbody>
             </table>
         </div>
 
-        <div style="display:flex; justify-content:center; gap:30px; font-size:12px; color:#444; padding:10px;">
-            <div>🇬🇧 <b>London:</b> 15:43</div>
-            <div>🇮🇱 <b>Israel:</b> 17:43</div>
+        <div style="display:flex; justify-content:center; gap:30px; font-size:12px; color:#444; padding:20px;">
+            <div>🇬🇧 London: 15:53</div>
+            <div>🇮🇱 Israel: 17:53</div>
         </div>
     </body>
     </html>
