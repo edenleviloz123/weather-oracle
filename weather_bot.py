@@ -6,72 +6,72 @@ import json
 from datetime import datetime
 import pytz
 
-# הגדרות מיתוג וצבעים (Idol Studios Style)
+# הגדרות מיתוג (Idol Studios Style)
 BRAND_GREEN = "#B5EBBF"
 ERROR_RED = "#FF4444"
 GOLD_COLOR = "#FFD700"
 
-def get_market_data_scraping():
-    """סורק את הנתונים ישירות מה-Internal API של האתר (בדומה ל-Scraping)"""
-    # כתובת ה-API הפנימית שפולימרקט משתמשת בה כדי להציג את האירוע הספציפי
-    # אנחנו מחפשים אירועים תחת הסלאג של טמפרטורה בלונדון
-    url = "https://gamma-api.polymarket.com/events?slug=highest-temperature-in-london-on-april-17"
+def get_market_data_by_date():
+    """בונה את הסלאג לפי התאריך הנוכחי בלונדון ושואב נתונים"""
+    tz_uk = pytz.timezone('Europe/London')
+    now_uk = datetime.now(tz_uk)
     
-    # ניסיון דינמי: אם התאריך משתנה, הבוט ינסה למצוא את האירוע לפי מילת מפתח
-    search_url = "https://gamma-api.polymarket.com/events?limit=10&query=highest%20temperature%20london&active=true"
+    # בניית הסלאג בדיוק לפי הפורמט: highest-temperature-in-london-on-month-day-year
+    # דוגמה: highest-temperature-in-london-on-april-17-2026
+    date_slug = now_uk.strftime("%B-%d-%Y").lower()
+    event_slug = f"highest-temperature-in-london-on-{date_slug}"
+    
+    api_url = f"https://gamma-api.polymarket.com/events?slug={event_slug}"
     
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
     }
     
     results = []
     try:
-        # 1. חיפוש האירוע הפעיל
-        resp = requests.get(search_url, headers=headers, timeout=20)
-        if resp.status_code != 200: return []
+        print(f"DEBUG: Target Slug: {event_slug}")
+        resp = requests.get(api_url, headers=headers, timeout=20)
         
-        events = resp.json()
-        if not events: return []
-        
-        # לוקחים את האירוע הראשון שמתאים (הכי רלוונטי)
-        target_event = events[0]
-        markets = target_event.get('markets', [])
-        
-        print(f"DEBUG: Found Event: {target_event.get('title')}")
-        
-        for m in markets:
-            # כאן אנחנו לוקחים את הנתונים בדיוק כפי שהם מוצגים בטבלה באתר
-            title = m.get('groupItemTitle', '')
-            if not title: continue
+        if resp.status_code == 200:
+            events = resp.json()
+            if not events:
+                print("DEBUG: Event not found for this slug.")
+                return []
             
-            # שליפת מחיר ה-YES (outcomePrices בדרך כלל מכיל [YES, NO])
-            try:
-                prices = json.loads(m.get('outcomePrices', '["0", "0"]'))
-                yes_price = round(float(prices[0]) * 100, 1)
-            except:
-                yes_price = 0.0
+            # לוקחים את האירוע הראשון שנמצא
+            markets = events[0].get('markets', [])
+            for m in markets:
+                title = m.get('groupItemTitle', '')
+                if not title: continue
                 
-            if yes_price > 0:
-                results.append({
-                    "title": title,
-                    "poly_price": yes_price
-                })
-
-        # מיון לפי מעלות
-        def extract_num(t):
-            nums = ''.join(filter(str.isdigit, t.split('°')[0]))
-            return int(nums) if nums else 0
+                # שליפת מחיר ה-YES (המחיר הראשון בגרף)
+                try:
+                    prices = json.loads(m.get('outcomePrices', '["0", "0"]'))
+                    yes_price = round(float(prices[0]) * 100, 1)
+                except:
+                    yes_price = 0.0
+                
+                if yes_price > 0:
+                    results.append({
+                        "title": title,
+                        "poly_price": yes_price
+                    })
             
-        results.sort(key=lambda x: extract_num(x['title']))
-        return results
-        
+            # מיון לפי טמפרטורה
+            def extract_num(t):
+                nums = ''.join(filter(str.isdigit, t.split('°')[0]))
+                return int(nums) if nums else 0
+            
+            results.sort(key=lambda x: extract_num(x['title']))
+            return results
+        else:
+            print(f"DEBUG: API returned status {resp.status_code}")
     except Exception as e:
         print(f"DEBUG: Scraping Error: {e}")
     return []
 
 def calculate_ai_prob(avg, target_str):
-    """חישוב הסתברות (CDF)"""
+    """חישוב הסתברות (CDF) לפי ממוצע המודלים"""
     std = 0.7
     def cdf(x): return (1.0 + math.erf((x - avg) / (std * math.sqrt(2.0)))) / 2.0
     
@@ -80,9 +80,9 @@ def calculate_ai_prob(avg, target_str):
     except: return 0.0
         
     t_lower = target_str.lower()
-    if "higher" in t_lower or "above" in t_lower or "more" in t_lower:
+    if any(x in t_lower for x in ["higher", "above", "more", "or above"]):
         prob = 1.0 - cdf(val - 0.5)
-    elif "below" in t_lower or "under" in t_lower or "less" in t_lower:
+    elif any(x in t_lower for x in ["below", "under", "less", "or below"]):
         prob = cdf(val + 0.5)
     else:
         prob = cdf(val + 0.5) - cdf(val - 0.5)
@@ -93,23 +93,19 @@ def run_bot():
     tz_il, tz_uk = pytz.timezone('Asia/Jerusalem'), pytz.timezone('Europe/London')
     now_il, now_uk = datetime.now(tz_il).strftime('%H:%M'), datetime.now(tz_uk).strftime('%H:%M')
 
-    # 1. ORACLE DATA
+    # 1. ORACLE DATA (ממוצע המודלים לפי האפיון שלך)
     models = {"MeteoFrance": 18.4, "ICON": 18.1, "GFS": 18.9, "UKMO": 18.2, "ECMWF": 18.6}
     avg_oracle = round(sum(models.values()) / len(models), 2)
     lhr_live = 18.2
 
-    # 2. GET DATA (Using Scraping Logic)
+    # 2. FETCH AND PROCESS
+    poly_data = get_market_data_by_date()
     processed = []
-    poly_data = get_market_data_scraping()
-    
     for opt in poly_data:
         our_prob = calculate_ai_prob(avg_oracle, opt['title'])
         edge = round(our_prob - opt['poly_price'], 1)
         processed.append({
-            "label": opt['title'],
-            "poly": opt['poly_price'],
-            "ours": our_prob,
-            "edge": edge
+            "label": opt['title'], "poly": opt['poly_price'], "ours": our_prob, "edge": edge
         })
 
     best = max(processed, key=lambda x: x['edge']) if processed else None
@@ -162,7 +158,7 @@ def run_bot():
                 <p class="signal-text" style="color:{BRAND_GREEN if signal=='YES' else '#fff'};">{signal if processed else 'NO DATA'}</p>
             </div>
             {f"<table><tr><th>מעלות</th><th>פולי</th><th>AI %</th><th>EDGE</th></tr>{table_rows}</table>" if processed else 
-             f"<div style='text-align:center; color:#ffaa00; padding:20px; font-size:12px; direction:ltr;'><b>SCRAPING LOG:</b> No active London markets found via internal scan.</div>"}
+             f"<div style='text-align:center; color:#ffaa00; padding:20px; font-size:12px; direction:ltr;'><b>SYSTEM LOG:</b> Looking for London on {datetime.now(tz_uk).strftime('%B %d')}...</div>"}
         </div>
         <div class="footer-clocks">
             <div>🇬🇧 <b>London:</b> {now_uk}</div>
