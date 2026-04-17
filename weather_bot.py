@@ -73,7 +73,7 @@ def run_bot():
     now_il, now_uk = datetime.now(tz_il).strftime('%H:%M'), dt_uk.strftime('%H:%M')
     event_date_str = dt_uk.strftime("%d/%m/%Y")
 
-    # 1. מודלים מטאורולוגיים - הגדרת משקלים והסברים
+    # 1. מודלים מטאורולוגיים
     model_details = {
         "ECMWF": {"val": 18.6, "weight": "30%", "desc": "המודל האירופי - נחשב למדויק ביותר בעולם לטווח בינוני."},
         "UKMO": {"val": 18.2, "weight": "25%", "desc": "מודל השירות הבריטי - רמת דיוק מקסימלית לאזור לונדון."},
@@ -81,11 +81,9 @@ def run_bot():
         "ICON": {"val": 18.1, "weight": "15%", "desc": "מודל גרמני ברזולוציה גבוהה, מצטיין בחיזוי מקומי באירופה."},
         "MeteoFrance": {"val": 18.4, "weight": "10%", "desc": "מודל צרפתי מתקדם המתמחה במערכות לחץ משתנות."}
     }
-    
-    # חישוב ממוצע משוקלל
     avg_oracle = round(sum(m['val'] * (int(m['weight'].replace('%',''))/100) for m in model_details.values()), 2)
 
-    # 2. עיבוד נתונים וזיהוי ארביטראז'
+    # 2. עיבוד נתונים
     poly_data = get_market_data_by_date()
     processed = []
     for opt in poly_data:
@@ -93,24 +91,28 @@ def run_bot():
         edge = round(our_prob - opt['poly_price'], 1)
         processed.append({"label": opt['title'], "poly": opt['poly_price'], "ours": our_prob, "edge": edge})
 
-    # זיהוי החוזה המשתלם ביותר
-    best_contract = max(processed, key=lambda x: x['edge']) if processed else None
+    # לוגיקת בחירה משודרגת: רק חוזים עם לפחות 25% סיכוי ריאלי
+    safety_threshold = 25.0
+    valid_opportunities = [p for p in processed if p['ours'] >= safety_threshold and p['edge'] > 3.0]
     
-    # החלטה מבוססת ארביטראז' (מעל 3% Edge לטובתנו)
+    best_contract = None
     signal_action = "WAIT"
     recommendation = "אין הזדמנות מובהקת כרגע"
-    if best_contract and best_contract['edge'] > 3.0:
+    
+    if valid_opportunities:
+        best_contract = max(valid_opportunities, key=lambda x: x['edge'])
         signal_action = "BUY"
         recommendation = f"לרכוש: {best_contract['label']}"
-    elif best_contract and best_contract['edge'] < -5.0:
-        signal_action = "SELL/AVOID"
-        recommendation = f"להתרחק מ: {best_contract['label']}"
+    else:
+        # אם אין הזדמנות קנייה, נחפש אם יש משהו להתרחק ממנו (Edge שלילי מאוד)
+        risky_contracts = [p for p in processed if p['edge'] < -10.0]
+        if risky_contracts:
+            avoid = max(risky_contracts, key=lambda x: abs(x['edge']))
+            recommendation = f"להתרחק מ: {avoid['label']}"
 
     # 3. בניית ה-HTML
     table_rows = "".join([f"<tr><td>{p['label']}</td><td>{p['poly']}¢</td><td>{p['ours']}%</td><td style='color:{GOLD_COLOR if p['edge']>10 else (BRAND_GREEN if p['edge']>0 else ERROR_RED)}; font-weight:bold;'>{p['edge']:+.1f}%</td></tr>" for p in processed])
-    
     model_rows = "".join([f"<tr><td style='color:{BRAND_GREEN}'>{name}</td><td>{m['val']}°</td><td>{m['weight']}</td><td style='font-size:11px; color:#888; text-align:right;'>{m['desc']}</td></tr>" for name, m in model_details.items()])
-
     status_color = BRAND_GREEN if processed else "orange"
     
     html = f"""
@@ -126,20 +128,16 @@ def run_bot():
             .main-title {{ font-size:28px; font-weight:900; letter-spacing:1px; margin:0; display:flex; align-items:center; justify-content:center; gap:10px; }}
             .status-dot {{ width:12px; height:12px; background:{status_color}; border-radius:50%; box-shadow: 0 0 10px {status_color}; }}
             .subtitle {{ color:#666; font-size:14px; margin-top:5px; }}
-            
             .signal-box {{ text-align:center; padding:25px; border:2px solid {BRAND_GREEN if signal_action=="BUY" else "#222"}; border-radius:20px; margin:15px 0; }}
             .signal-action {{ font-size:14px; color:#555; text-transform:uppercase; }}
             .recommendation {{ font-size:38px; font-weight:900; color:{BRAND_GREEN if signal_action=="BUY" else "#fff"}; margin:5px 0; }}
-            
             table {{ width:100%; border-collapse:collapse; text-align:center; margin-top:10px; }}
             th {{ font-size:11px; color:#444; padding-bottom:10px; border-bottom:1px solid #1a1a1a; }}
             td {{ padding:12px 5px; border-bottom:1px solid #111; }}
-            
             .rationale-section {{ background:#111; padding:15px; border-radius:15px; border-right:4px solid {BRAND_GREEN}; }}
             .rationale-title {{ font-weight:bold; color:{BRAND_GREEN}; margin-bottom:8px; }}
             .rationale-text {{ font-size:14px; color:#ccc; }}
             .support-list {{ font-size:13px; color:#888; margin-top:10px; padding-right:15px; }}
-            
             .section-label {{ font-size:11px; color:#555; margin-bottom:10px; display:flex; align-items:center; gap:5px; }}
             .info-icon {{ font-size:10px; border:1px solid #333; border-radius:50%; width:14px; height:14px; display:inline-flex; align-items:center; justify-content:center; }}
         </style>
@@ -156,7 +154,6 @@ def run_bot():
                 <div class="signal-action">Recommended Action</div>
                 <div class="recommendation">{recommendation if processed else "סורק נתונים..."}</div>
             </div>
-            
             {f"<table><tr><th>חוזה (טמפ')</th><th>מחיר פולי</th><th>הסתברות AI</th><th>Edge</th></tr>{table_rows}</table>" if processed else ""}
         </div>
 
@@ -165,12 +162,12 @@ def run_bot():
             <div class="rationale-section">
                 <div class="rationale-title">ניתוח ארביטראז' סופי:</div>
                 <div class="rationale-text">
-                    {f"זוהה פער משמעותי לטובתנו בחוזה <b>{best_contract['label']}</b>. בעוד השוק מתמחר הסתברות של {best_contract['poly']}%, המודלים המטאורולוגיים מצביעים על {best_contract['ours']}%. זהו ארביטראז' של {best_contract['edge']}% המצדיק כניסה." if signal_action=="BUY" else "כרגע מחירי השוק משקפים היטב את תחזיות המודלים. אין פער ארביטראז' של מעל 3%, לכן מומלץ להמתין לעדכון המודלים הבא או לתנודת מחיר בפולימרקט."}
+                    {f"זוהה פער משמעותי בחוזה <b>{best_contract['label']}</b>. להסתברות של {best_contract['ours']}% יש בסיס סטטיסטי חזק (מעל רף ה-25%), והמחיר בשוק זול משמעותית." if signal_action=="BUY" else f"המערכת לא זיהתה חוזה המשלב הסתברות גבוהה (מעל 25%) עם Edge משמעותי. {recommendation}."}
                 </div>
                 <div class="support-list">
-                    • <b>ביסוס:</b> שקלול של 5 מודלים נותן ממוצע של {avg_oracle}°. <br>
-                    • <b>מגמה:</b> השוק כרגע { 'באופטימיות יתרה' if best_contract and best_contract['edge'] < 0 else 'בפסימיות' } ביחס לנתוני ה-AI.<br>
-                    • <b>סטטוס:</b> הנתונים מעודכנים לשעה {now_uk} זמן לונדון.
+                    • <b>ביסוס:</b> שקלול מודלים נותן {avg_oracle}°. <br>
+                    • <b>רף ביטחון:</b> המערכת מסננת כעת אירועים עם הסתברות נמוכה מ-25%.<br>
+                    • <b>עדכון:</b> הנתונים נכונים לשעה {now_uk} זמן לונדון.
                 </div>
             </div>
         </div>
@@ -181,9 +178,7 @@ def run_bot():
                 <thead>
                     <tr><th style="text-align:right;">מודל</th><th>תחזית</th><th>משקל</th><th style="text-align:right;">תיאור המודל</th></tr>
                 </thead>
-                <tbody>
-                    {model_rows}
-                </tbody>
+                <tbody>{model_rows}</tbody>
             </table>
             <div style="text-align:center; margin-top:15px; font-size:12px; color:{BRAND_GREEN}; font-weight:bold;">
                 ממוצע משוקלל סופי: {avg_oracle}°
