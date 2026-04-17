@@ -1,4 +1,4 @@
-name: Polymarket Weather Oracle v6
+name: Polymarket Weather Oracle v6.1
 
 on:
   schedule:
@@ -21,7 +21,9 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install requests pytz
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pytz
 
       - name: Run Weather Bot
         env:
@@ -33,5 +35,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "V6.0 Deep Scan Update" || exit 0
+          git commit -m "V6.1 Fix Dependencies and UI" || exit 0
           git push
