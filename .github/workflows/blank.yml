@@ -1,6 +1,5 @@
 name: Polymarket Weather Oracle
 
-# הבוט ירוץ כל 15 דקות וגם ניתן להרצה ידנית
 on:
   schedule:
     - cron: '*/15 * * * *'
@@ -9,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # השורה הזו קריטית כדי שהבוט יוכל לשמור את האתר החדש!
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -20,11 +22,9 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        # הוספתי כאן את pytz בשביל השעונים
         run: pip install requests pytz
 
       - name: Run Weather Bot
-        # כאן הבוט "מושך" את המפתח הסודי שהגדרת ב-Secrets
         env:
           POLY_API_KEY: ${{ secrets.POLY_API_KEY }}
         run: python weather_bot.py
