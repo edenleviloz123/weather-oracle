@@ -1,4 +1,4 @@
-name: Polymarket Weather Oracle v6.4
+name: Polymarket Weather Oracle v6.5
 
 on:
   schedule:
@@ -19,6 +19,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+          # הסרנו את שורת ה-cache שגרמה לשגיאה
 
       - name: Install dependencies
         run: pip install requests pytz
@@ -34,5 +35,5 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
           git pull --rebase origin main
-          git commit -m "V6.4 Final Fix - Removed Cache Dependency" || exit 0
+          git commit -m "V6.5 Final Deployment - Fix Build Error" || exit 0
           git push origin main
