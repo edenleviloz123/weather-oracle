@@ -11,7 +11,6 @@ ERROR_RED = "#FF4444"
 GOLD_COLOR = "#FFD700"
 
 def get_market_data():
-    """Deep Scan: מחפש כל שוק שקשור למזג אוויר ומדווח מה מצא"""
     api_key = os.getenv("POLY_API_KEY")
     ts = int(time.time())
     url = f"https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=1000&_={ts}"
@@ -30,16 +29,11 @@ def get_market_data():
         markets = resp.json()
         for m in markets:
             q = m.get('question', "").lower()
-            
-            # אם השוק קשור למזג אוויר (בכל מקום בעולם)
             if any(x in q for x in ["temp", "weather", "degree", "high temperature"]):
                 found_any_weather.append(q)
-                
-                # סינון ספציפי ללונדון/הית'רו/בריטניה
                 if any(x in q for x in ["london", "heathrow", "uk"]):
                     token_id = m.get('clobTokenIds', [""])[0]
                     if not token_id: continue
-                    
                     try:
                         price = round(float(json.loads(m.get('outcomePrices', '[0]'))[0]) * 100, 1)
                         title = m.get('groupItemTitle', q)
@@ -74,7 +68,6 @@ def run_bot():
     best = max(processed, key=lambda x: x['edge']) if processed else None
     signal = "YES" if best and best['edge'] > 3.0 else "NO"
 
-    # HTML Generation
     model_html = "".join([f"<div style='text-align:center;'><div style='color:#555; font-size:10px;'>{k}</div><div>{v}°</div></div>" for k,v in models.items()])
     rows = "".join([f"<tr style='border-bottom:1px solid #1a1a1a;'><td style='padding:15px;'>{p['label']}</td><td style='text-align:center;'>{p['poly']}¢</td><td style='text-align:center;'>{p['ours']}%</td><td style='color:{GOLD_COLOR if p['edge']>10 else (BRAND_GREEN if p['edge']>0 else ERROR_RED)}; font-weight:bold; text-align:left;'>{p['edge']:+.1f}%</td></tr>" for p in processed])
 
@@ -90,11 +83,9 @@ def run_bot():
         .title {{ font-size:11px; color:#555; font-weight:bold; margin-bottom:15px; text-transform:uppercase; }}
         table {{ width:100%; border-collapse:collapse; }}
         th {{ font-size:10px; color:#333; padding-bottom:10px; }}
-        .debug-list {{ font-size:10px; color:#ffaa00; background:#1a1100; padding:15px; border-radius:15px; border:1px solid #332200; margin-top:10px; direction:ltr; text-align:left; }}
     </style></head>
     <body>
-        <div style="text-align:center; color:{BRAND_GREEN}; padding:15px; font-weight:900;">ORACLE MONSTER v6.0</div>
-
+        <div style="text-align:center; color:{BRAND_GREEN}; padding:15px; font-weight:900;">ORACLE MONSTER v6.1</div>
         <div class="card">
             <div class="title">📊 דאטה מודלים</div>
             <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; border-bottom:1px solid #1a1a1a; padding-bottom:15px; margin-bottom:15px;">{model_html}</div>
@@ -103,21 +94,18 @@ def run_bot():
                 <div style="text-align:center;"><small style="color:#444;">LHR LIVE</small><br><b style="font-size:28px;">{lhr_live}°</b></div>
             </div>
         </div>
-
         <div class="card">
             <div class="title">⚖️ ארביטראז' פולימרקט</div>
             <div style="text-align:center; padding:25px; border:2px solid {BRAND_GREEN if signal=='YES' else '#222'}; border-radius:20px; margin-bottom:20px;">
                 <div style="font-size:55px; font-weight:900; color:{BRAND_GREEN if signal=='YES' else '#fff'};">{signal if processed else 'SCANNING'}</div>
             </div>
-            {f"<table><tr><th style='text-align:right;'>מעלות</th><th>פולי</th><th>AI %</th><th style='text-align:left;'>EDGE</th></tr>{rows}</table>" if processed else f"<div class='debug-list'><b>DEEP SCAN REPORT (שווקים שנמצאו):</b><br>{weather_debug if weather_list else 'לא נמצאו שווקי מזג אוויר פעילים בכלל בפולימרקט.'}</div>"}
+            {f"<table><tr><th style='text-align:right;'>מעלות</th><th>פולי</th><th>AI %</th><th style='text-align:left;'>EDGE</th></tr>{rows}</table>" if processed else f"<div style='font-size:10px; color:#ffaa00; padding:15px; direction:ltr; text-align:left;'><b>DEEP SCAN:</b><br>{weather_debug if weather_list else 'No weather markets found.'}</div>"}
         </div>
-
         <div class="card">
             <div class="title">🧠 נימוק</div>
             <div style="font-size:14px; color:#888;">{f"פער של {best['edge']}% זוהה בטווח {best['label']}." if processed else "מחפש חוזים רלוונטיים..."}</div>
         </div>
-
-        <div style="display:flex; justify-content:center; gap:20px; font-size:12px; color:#444;">
+        <div style="display:flex; justify-content:center; gap:20px; font-size:12px; color:#444; padding:20px;">
             <div>🇬🇧 London: {now_uk}</div>
             <div>🇮🇱 Israel: {now_il}</div>
         </div>
