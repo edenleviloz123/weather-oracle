@@ -1,4 +1,4 @@
-name: Polymarket Weather Oracle v6.6
+name: Polymarket Oracle Final
 
 on:
   schedule:
@@ -12,7 +12,7 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -22,25 +22,18 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install
         run: pip install requests pytz
 
-      - name: Run Weather Bot
+      - name: Run
         env:
           POLY_API_KEY: ${{ secrets.POLY_API_KEY }}
         run: python weather_bot.py
 
-      - name: Commit and push changes
+      - name: Deploy
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # פתרון לשגיאה 128:
           git add index.html
-          git stash                          # שומר את ה-index.html שיצרנו בצד
-          git pull --rebase origin main      # מושך עדכונים מהשרת באופן נקי
-          git stash pop                      # מחזיר את ה-index.html שלנו
-          
-          git add index.html
-          git commit -m "V6.6 Auto-update with Stash/Pop" || exit 0
-          git push origin main
+          git commit -m "V7.0 Full Requirements Met" || exit 0
+          git push origin main --force
